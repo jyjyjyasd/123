@@ -1,0 +1,716 @@
+--- LATEST GENERATIONS ---
+ID: 4d910bf7-6227-4c20-b1b8-bc95ddc6fad2
+Status: failed
+Prompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+A French vintage apothecary skincare poster, cream aged paper texture, sepia botanical engravings, antique pharmacy label frames, muted olive and burgundy details, elegant serif typography, refined editorial layout, warm nostalgic beauty clinic atmosphere, handcrafted premium treatment feeling.
+
+Reference Interpretation:
+- No reference images were attached.
+
+Typography & Text Layout:
+- Main Title text layer: The poster MUST prominently and clearly display each of the following separate text phrases verbatim in their original language: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly professional modern graphic design font style, positioned perfectly as separate layout elements. CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! Only print the exact character segments: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". DO NOT translate, change spelling, or modify the characters under any circumstances. Ensure there are no typos or bad spelling.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: s型排版
+- Layout and Hierarchy Guidelines: s型排版. NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 9:16
+- Resolution target: 1k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorCode: content_policy
+ErrorMessage: Prompt 触发了内容审核
+CreatedAt: 2026-06-28 13:00:59.846069
+--------------------------------------------------
+ID: 3dd8ffb8-7201-418e-b7ed-e2b7bdab67d8
+Status: failed
+Prompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+A French vintage apothecary skincare poster, cream aged paper texture, sepia botanical engravings, antique pharmacy label frames, muted olive and burgundy details, elegant serif typography, refined editorial layout, warm nostalgic beauty clinic atmosphere, handcrafted premium treatment feeling.
+
+Reference Interpretation:
+- No reference images were attached.
+
+Typography & Text Layout:
+- Main Title text layer: The poster MUST prominently and clearly display each of the following separate text phrases verbatim in their original language: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly professional modern graphic design font style, positioned perfectly as separate layout elements. CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! Only print the exact character segments: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". DO NOT translate, change spelling, or modify the characters under any circumstances. Ensure there are no typos or bad spelling.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: s型排版
+- Layout and Hierarchy Guidelines: s型排版. NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 9:16
+- Resolution target: 1k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorCode: server_restarted
+ErrorMessage: 服务器重启，任务执行中断，请重试。
+CreatedAt: 2026-06-28 13:00:00.666421
+--------------------------------------------------
+ID: 106279e2-8971-4f96-8a15-1f0da2c259b5
+Status: failed
+Prompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+A French vintage apothecary skincare poster, cream aged paper texture, sepia botanical engravings, antique pharmacy label frames, muted olive and burgundy details, elegant serif typography, refined editorial layout, warm nostalgic beauty clinic atmosphere, handcrafted premium treatment feeling.
+
+Reference Interpretation:
+- No reference images were attached.
+
+Typography & Text Layout:
+- Main Title text layer: The poster MUST prominently and clearly display each of the following separate text phrases verbatim in their original language: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly professional modern graphic design font style, positioned perfectly as separate layout elements. CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! Only print the exact character segments: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". DO NOT translate, change spelling, or modify the characters under any circumstances. Ensure there are no typos or bad spelling.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: s型排版
+- Layout and Hierarchy Guidelines: s型排版. NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 9:16
+- Resolution target: 1k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorCode: content_policy
+ErrorMessage: Prompt 触发了内容审核
+CreatedAt: 2026-06-28 12:56:37.457215
+--------------------------------------------------
+ID: 3920505b-88a8-49f1-85ec-fb135c7a7356
+Status: failed
+Prompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+A French vintage apothecary skincare poster, cream aged paper texture, sepia botanical engravings, antique pharmacy label frames, muted olive and burgundy details, elegant serif typography, refined editorial layout, warm nostalgic beauty clinic atmosphere, handcrafted premium treatment feeling.
+
+Reference Interpretation:
+- No reference images were attached.
+
+Typography & Text Layout:
+- Main Title text layer: The poster MUST prominently and clearly display each of the following separate text phrases verbatim in their original language: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly professional modern graphic design font style, positioned perfectly as separate layout elements. CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! Only print the exact character segments: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". DO NOT translate, change spelling, or modify the characters under any circumstances. Ensure there are no typos or bad spelling.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: s型排版
+- Layout and Hierarchy Guidelines: s型排版. NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 9:16
+- Resolution target: 1k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorCode: upstream_error
+ErrorMessage: 上游任务失败: all channels failed. Last error: do request failed: do request failed: upstream error: do request failed
+CreatedAt: 2026-06-28 12:23:49.678973
+--------------------------------------------------
+ID: 6b4521ca-a2a4-4374-83a5-bc9624c0b610
+Status: completed
+Prompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+国风
+
+Reference Interpretation:
+- No reference images were attached.
+
+Typography & Text Layout:
+- Main Title text layer: The poster MUST prominently and clearly display each of the following separate text phrases verbatim in their original language: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly professional modern graphic design font style, positioned perfectly as separate layout elements. CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! Only print the exact character segments: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". DO NOT translate, change spelling, or modify the characters under any circumstances. Ensure there are no typos or bad spelling.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: 中央区域放置核心标题与主利益点，四个套餐围绕中心分布，底部用横条承载REO定制服务与咨询提示，增强信息聚合感。
+- Layout and Hierarchy Guidelines: 中央区域放置核心标题与主利益点，四个套餐围绕中心分布，底部用横条承载REO定制服务与咨询提示，增强信息聚合感。. NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 9:16
+- Resolution target: 1k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorCode: None
+ErrorMessage: None
+CreatedAt: 2026-06-28 11:43:50.890513
+--------------------------------------------------
+
+--- LATEST AGENT SESSIONS ---
+ID: 65cea989-60bc-4526-9335-56ceb4745333
+Status: failed
+FinalPrompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+A French vintage apothecary skincare poster, cream aged paper texture, sepia botanical engravings, antique pharmacy label frames, muted olive and burgundy details, elegant serif typography, refined editorial layout, warm nostalgic beauty clinic atmosphere, handcrafted premium treatment feeling.
+
+Reference Interpretation:
+- No reference images were attached.
+
+Typography & Text Layout:
+- Main Title text layer: The poster MUST prominently and clearly display each of the following separate text phrases verbatim in their original language: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly professional modern graphic design font style, positioned perfectly as separate layout elements. CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! Only print the exact character segments: "科技抗衰", "紧致焕白 · 专属REO定制赋能
+
+岁月无痕，沐春新生
+以高精护肤科技，逆转肌龄松弛、暗沉倦态
+层层紧致提拉，通透焕亮肌底
+私人REO定制服务加持，适配不同肤质抗衰需求
+精准修护、奢护嫩肤、定格年轻好状态
+
+套餐明细·轻奢焕肤体系
+
+✅【外泌体焕白护理】9800元 / 6次
+靶向提亮褪黄，改善肌肤暗沉、粗糙、无光
+渗透修护肌底，均匀肤色，打造通透原生白皮
+温和修护受损肌，细腻嫩肤，素颜自带柔光滤镜
+
+✅【经典焕白年卡】12800元 / 12次
+高频长效焕白养护
+持续代谢肌底黑色素、老旧废角质
+淡化暗沉痘印，提亮整体肤色
+长期维稳肌肤通透感，告别反复黄气，持久白皙透亮
+
+✅【黄金紧致抗衰】29800元 / 6次
+专攻松弛、下垂、细纹、干纹问题
+高阶抗衰紧致配方，提拉轮廓、收紧面皮
+重塑脸部线条，改善垮脸、法令纹、苹果肌下垂
+紧致弹润，还原肌肤年轻支撑力，逆转初老痕迹
+
+✅【外泌体黄金顶配焕肤】49800元 / 12次
+沐春系列王牌顶配", "抗衰+焕白双效合一
+外泌体深层修护+黄金紧致抗衰双重赋能
+一站式解决暗沉发黄、肌肤松弛、纹路增生、肤质粗糙
+全年长效养护，由内焕活肌底胶原
+紧致抗老、通透冷白，定格少女原生嫩肌
+
+专属增值", "REO私人定制服务
+
+所有沐春系列套餐，均可叠加REO定制专属服务
+根据个人肤质、肌龄、肌肤问题定制专属护理方案
+精准匹配护肤节奏、修护重点
+千人千面定制化抗衰焕肤，效果翻倍，奢享专属变美体验
+《寄语》不追赶时光，只重塑年轻
+再青春沐春系列
+用科技之力，褪去岁月痕迹
+紧致轮廓、焕亮肌底、常驻青春好气色✨". DO NOT translate, change spelling, or modify the characters under any circumstances. Ensure there are no typos or bad spelling.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: s型排版
+- Layout and Hierarchy Guidelines: s型排版. NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 9:16
+- Resolution target: 1k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorMessage: Prompt 触发了内容审核
+UpdatedAt: 2026-06-28 13:03:48.166988
+--------------------------------------------------
+ID: 5ce5f4a4-e054-46f2-babe-14c94304b333
+Status: review
+FinalPrompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+Clinical clean beauty facial treatment poster, pure white main color, pale medical blue secondary color, translucent aqua accents, high-key cool lighting, soft overhead diffused light, glossy glass and clean acrylic texture, professional skincare clinic aesthetic, calm trustworthy atmosphere, balanced grid composition, moderate negative space.
+
+Reference Interpretation:
+- Layout reference image was analyzed only for composition, typography hierarchy, spacing, alignment, and visual weight distribution.
+
+Typography & Text Layout:
+- Main Title text layer: The poster MUST prominently and clearly display each of the following separate text phrases verbatim in their original language: "面部护理", "焕颜美肤 定制呵护", "多维护理组合 精准改善肤感与轮廓", "补水净肤、紧致提升、提亮焕颜", "热门护理项目", "980 轻薄脸+补水护理+纳米级深层清洁", "698 面部提升+V脸打造+面部护理", "698 提亮肤色+面眼提升+深层清洁", "核心亮点", "01 补水净肤 深层清洁毛孔污垢，提升肌肤水润度与通透感", "02 紧致提升 帮助改善面部轮廓，打造更清晰的V脸线条", "03 焕亮肤色 改善暗沉，令肌肤更显细腻透亮". Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly professional modern graphic design font style, positioned perfectly as separate layout elements. CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! Only print the exact character segments: "面部护理", "焕颜美肤 定制呵护", "多维护理组合 精准改善肤感与轮廓", "补水净肤、紧致提升、提亮焕颜", "热门护理项目", "980 轻薄脸+补水护理+纳米级深层清洁", "698 面部提升+V脸打造+面部护理", "698 提亮肤色+面眼提升+深层清洁", "核心亮点", "01 补水净肤 深层清洁毛孔污垢，提升肌肤水润度与通透感", "02 紧致提升 帮助改善面部轮廓，打造更清晰的V脸线条", "03 焕亮肤色 改善暗沉，令肌肤更显细腻透亮". DO NOT translate, change spelling, or modify the characters under any circumstances. Ensure there are no typos or bad spelling.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: 护理套餐与核心亮点分别做成信息卡片，价格、项目与功效拆分明确，便于用户快速对比。
+- Layout and Hierarchy Guidelines: 护理套餐与核心亮点分别做成信息卡片，价格、项目与功效拆分明确，便于用户快速对比。. NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 3:4
+- Resolution target: 2k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorMessage: None
+UpdatedAt: 2026-06-28 02:01:49.594587
+--------------------------------------------------
+ID: a5073f4e-cbb0-4550-a764-e78c727f1c8d
+Status: review
+FinalPrompt: A premium, high-end editorial graphic design poster.
+Visual Scene Design:
+No specific visual direction was provided. Create a clean, restrained, premium poster visual with simple composition and avoid inventing unrelated subjects.
+
+Reference Interpretation:
+- No reference images were attached.
+
+Typography & Text Layout:
+- Main Title text layer: No main title text was provided. Keep the design clean and do not invent random text.
+- Subtext/Slogan details: No separate secondary text is provided. The complete copy to be rendered is described in the Main Title text layer. Please arrange and segment the text according to the Layout and Hierarchy Guidelines below.
+- Structure rules: No layout reference was provided. Use a balanced editorial poster layout with clear spacing and simple hierarchy.
+- Layout and Hierarchy Guidelines: . NOTE: The guidelines described here are design and layout instructions only. DO NOT print this instruction/description text itself on the poster under any circumstances! Only print the actual copy characters from the Main Title text layer.
+
+Format & Composition:
+- Aspect Ratio: 9:16
+- Resolution target: 2k
+- Generate a complete finished poster, not only a background image. The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.
+- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.
+- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, clean typography when text exists, no overlapping elements, masterpiece.
+ErrorMessage: None
+UpdatedAt: 2026-06-28 01:05:20.882464
+--------------------------------------------------

@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "D:\ai\agent\agent合并\PosterForge-main\backend\test_refresh_styles_all.py", line 26, in main
+    out = await refresh_styles(session_id=s.id, user=user, db=db)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ai\agent\agent合并\PosterForge-main\backend\app\routers\agent_sessions.py", line 307, in refresh_styles
+    s = await _get_or_404(session_id, user, db)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\ai\agent\agent合并\PosterForge-main\backend\app\routers\agent_sessions.py", line 55, in _get_or_404
+    raise_http("not_found", "Agent 会话不存在", status_code=404)
+  File "D:\ai\agent\agent合并\PosterForge-main\backend\app\errors.py", line 39, in raise_http
+    raise HTTPException(
+fastapi.exceptions.HTTPException: 404: {'error': {'code': 'not_found', 'message': 'Agent 会话不存在'}}

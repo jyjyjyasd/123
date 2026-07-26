@@ -1,0 +1,53 @@
+# OS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.playwright-mcp/
+.pytest_cache/
+.mimocode/node_modules/
+
+
+# Frontend (Vite)
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+frontend/.turbo/
+frontend/coverage/
+frontend/*.tsbuildinfo
+
+# Backend (Python)
+backend/.venv/
+backend/__pycache__/
+backend/**/__pycache__/
+backend/.pytest_cache/
+backend/.ruff_cache/
+backend/.mypy_cache/
+backend/*.egg-info/
+backend/dist/
+
+# Runtime data — local disk storage (PRD §4.6)
+backend/data/
+
+# Secrets
+backend/.env
+.env
+.env.local
+
+# Legacy Next.js residue (just in case)
+/.next/
+/out/
+/build/
+/node_modules/
+
+# Cloned plugins
+cowart/

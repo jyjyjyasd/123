@@ -1,0 +1,182 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Notion-style design tokens (PRD §5.2 / §5.3) */
+:root {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "PingFang SC", "Source Han Sans SC", "思源黑体", "Microsoft YaHei",
+    system-ui, sans-serif;
+
+  /* Surfaces */
+  --bg-primary: #ffffff;
+  --bg-secondary: #f7f6f3;
+  --bg-tertiary: #efeeec;
+  --bg-hover: rgba(55, 53, 47, 0.04);
+  --bg-active: rgba(55, 53, 47, 0.08);
+
+  /* Text */
+  --text-primary: #37352f;
+  --text-secondary: #787774;
+  --text-tertiary: #9b9a97;
+  --text-disabled: #d3d1cb;
+
+  /* Borders */
+  --border-default: rgba(55, 53, 47, 0.09);
+  --border-strong: rgba(55, 53, 47, 0.16);
+
+  /* Accent (used sparingly — links / selected states) */
+  --accent: #487ca5;
+  --accent-hover: #3a698d;
+  --accent-bg: rgba(72, 124, 165, 0.08);
+
+  /* Status */
+  --success: #4f8277;
+  --warning: #9a713b;
+  --error: #e03e3e;
+  --error-bg: rgba(224, 62, 62, 0.08);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 20px;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+button {
+  font-family: inherit;
+}
+
+/* SpotlightBar progress shimmer */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* Backdrop fade-in */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Settings popover slide-up entrance */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Card staggered fade-in */
+@keyframes cardIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ImageViewer — opacity-only fade-in.
+   Don't animate transform here: it'd fight the dynamic zoom/pan transform. */
+@keyframes viewerImageIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Slim scrollbar for spotlight textarea — only visible when needed */
+.spotlight-textarea::-webkit-scrollbar {
+  width: 6px;
+}
+.spotlight-textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+.spotlight-textarea::-webkit-scrollbar-thumb {
+  background: rgba(55, 53, 47, 0.16);
+  border-radius: 3px;
+}
+.spotlight-textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(55, 53, 47, 0.28);
+}
+.spotlight-textarea {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(55, 53, 47, 0.16) transparent;
+}
+
+/* Drawer slide-left entrance */
+@keyframes slideLeft {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+/* Poster canvas loading bounce dots */
+@keyframes bounce {
+  0%, 80%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+/* Poster canvas shimmer sweep */
+@keyframes shimmer-sweep {
+  0% { left: -25%; }
+  100% { left: 100%; }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Hide scrollbar utility (retains scrolling behavior but hides scrollbar visually) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
