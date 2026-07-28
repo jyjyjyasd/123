@@ -6665,7 +6665,7 @@ export function AgentWorkspace() {
 
 
 
-      const rawVal = hasStyleRef ? "风格参考图" : (currentStyleName || "");
+      const rawVal = hasStyleRef ? "风格参考图" : (currentStyleName || session?.stream_b?.visual_description || "");
 
 
 
@@ -6777,7 +6777,7 @@ export function AgentWorkspace() {
 
 
 
-      const rawLayoutVal = hasLayoutRef ? "排版参考图" : (currentLayoutName === "未提供" ? "" : currentLayoutName);
+      const rawLayoutVal = hasLayoutRef ? "排版参考图" : (session?.stream_a?.layout_notes || (currentLayoutName === "未提供" ? "" : currentLayoutName));
 
 
 
@@ -8145,7 +8145,7 @@ export function AgentWorkspace() {
 
 
 
-      // visual_description is not overwritten by recommended style; custom textarea keeps its own value
+      updatePayload.stream_b.visual_description = formData.selectedStyle.visualDescription || formData.selectedStyle.description || "";
 
 
 
@@ -8177,7 +8177,7 @@ export function AgentWorkspace() {
 
 
 
-      // layout_notes is not overwritten by recommended layout; custom textarea keeps its own value
+      updatePayload.stream_a.layout_notes = selectedLayout.layoutNotes || selectedLayout.description || "";
 
 
 
@@ -8225,7 +8225,39 @@ export function AgentWorkspace() {
 
 
 
-    // selectedStyle and selectedLayout are preserved; user's recommendation selection persists after Stage 1 confirmation
+    setFormData((prev) => ({
+
+
+
+
+
+
+
+      ...prev,
+
+
+
+
+
+
+
+      selectedStyle: null,
+
+
+
+
+
+
+
+      selectedLayout: null,
+
+
+
+
+
+
+
+    }));
 
 
 
