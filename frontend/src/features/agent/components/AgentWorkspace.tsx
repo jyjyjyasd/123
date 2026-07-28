@@ -5714,157 +5714,21 @@ export function AgentWorkspace() {
 
 
   const resolveFriendlyStyleName = (val: string) => {
-
-
-
-
-
-
-
     if (!val) return "";
-
-
-
-
-
-
-
-    if (!isFullPrompt(val)) return val;
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     const recs = getStyleRecs();
-
-
-
-
-
-
-
     for (const rec of recs) {
-
-
-
-
-
-
-
       if (rec.visualDescription && val.toLowerCase().includes(rec.visualDescription.toLowerCase().trim())) {
-
-
-
-
-
-
-
         return rec.name;
-
-
-
-
-
-
-
       }
-
-
-
-
-
-
-
       if (rec.nameEn && val.toLowerCase().includes(rec.nameEn.toLowerCase().trim())) {
-
-
-
-
-
-
-
         return rec.name;
-
-
-
-
-
-
-
       }
-
-
-
-
-
-
-
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    if (!isFullPrompt(val)) return val;
     if (formData.selectedStyle?.name) {
-
-
-
-
-
-
-
       return formData.selectedStyle.name;
-
-
-
-
-
-
-
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     return "";
-
-
-
-
-
-
-
   };
 
 
@@ -6682,14 +6546,8 @@ export function AgentWorkspace() {
 
 
       const isNoStyle = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无明确指定视觉风格"].some(kw => friendlyVal.trim().toLowerCase().includes(kw)) || !friendlyVal;
-
-
-
-
-
-
-
-      const styleVal = isNoStyle ? "" : friendlyVal;
+      const isCurrentActive = !formData.selectedStyle;
+      const styleVal = !isCurrentActive ? "" : (isNoStyle ? "" : friendlyVal);
 
 
 
@@ -6729,7 +6587,7 @@ export function AgentWorkspace() {
 
 
 
-  }, [session?.stream_b?.visual_description, session?.clarify_messages, session?.stream_b?.style_reference_image]);
+  }, [session?.stream_b?.visual_description, session?.clarify_messages, session?.stream_b?.style_reference_image, formData.selectedStyle]);
 
 
 
@@ -6786,14 +6644,8 @@ export function AgentWorkspace() {
 
 
       const isNoLayout = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无具体排版要求"].some(kw => rawLayoutVal.toLowerCase().includes(kw)) || !rawLayoutVal;
-
-
-
-
-
-
-
-      const layoutVal = isNoLayout ? "" : rawLayoutVal;
+      const isCurrentLayoutActive = !formData.selectedLayout;
+                                 const layoutVal = !isCurrentLayoutActive ? "" : (isNoLayout ? "" : rawLayoutVal);
 
 
 
@@ -6833,7 +6685,7 @@ export function AgentWorkspace() {
 
 
 
-  }, [session?.stream_a?.layout_notes, session?.clarify_messages, session?.stream_b?.layout_reference_image]);
+  }, [session?.stream_a?.layout_notes, session?.clarify_messages, session?.stream_b?.layout_reference_image, formData.selectedLayout]);
 
 
 
@@ -17126,14 +16978,7 @@ export function AgentWorkspace() {
 
 
                                       const isNoStyle = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无明确指定视觉风格"].some(kw => friendlyVal.trim().toLowerCase().includes(kw)) || !friendlyVal;
-
-
-
-
-
-
-
-                                      const styleVal = isNoStyle ? "" : friendlyVal;
+                                      const styleVal = !isCurrentActive ? "" : (isNoStyle ? "" : friendlyVal);
 
 
 
@@ -19582,14 +19427,8 @@ export function AgentWorkspace() {
 
 
                                  const isNoLayout = origIsNoLayout;
-
-
-
-
-
-
-
-                                 const layoutVal = isNoLayout ? "" : rawLayoutVal;
+                                 const isCurrentLayoutActive = !formData.selectedLayout;
+                                 const layoutVal = !isCurrentLayoutActive ? "" : (isNoLayout ? "" : rawLayoutVal);
 
 
 
