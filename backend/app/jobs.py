@@ -3,10 +3,12 @@
 FastAPI BackgroundTasks invokes `run_generation_job(generation_id)`,
 which opens its own DB session, calls the proxy, persists files,
 and updates the Generation row.
+
+v1.0 (Tencent Cloud VOD): 读取本地参考图字节，由 proxy 层使用 VOD ApplyUpload 
+上传至媒资获取 FileId，再提交异步生成任务。
 """
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from datetime import datetime, timezone
@@ -16,7 +18,7 @@ from sqlalchemy import select
 from app.db import SessionLocal
 from app.errors import AppError
 from app.models import File, Generation
-from app.proxy import run_image_generation, upload_reference_to_apimart
+from app.proxy import run_image_generation
 from app.storage import absolute_path_for, save_output
 
 logger = logging.getLogger("posterforge.jobs")
@@ -35,7 +37,8 @@ async def _load_reference_ids(gen: Generation) -> list[str]:
         return []
 
 
-async def _build_image_urls(session, ref_ids: list[str]) -> list[str]:
+async def _load_ref_files(session, ref_ids: list[str]) -> list[tuple[bytes, str]]:
+    """读取本地参考图文件，返回 (bytes, mime) 列表，保持原始顺序。"""
     ref_files_rows = list(
         (
             await session.execute(select(File).where(File.id.in_(ref_ids)))
@@ -45,20 +48,14 @@ async def _build_image_urls(session, ref_ids: list[str]) -> list[str]:
     )
     row_by_id = {f.id: f for f in ref_files_rows}
 
-    ordered_refs: list[File] = []
+    result: list[tuple[bytes, str]] = []
     for fid in ref_ids:
         ref = row_by_id.get(fid)
         if ref is None:
             raise AppError("not_found", f"Reference file {fid} not found")
-        ordered_refs.append(ref)
-
-    async def _upload_one(ref: File) -> str:
-        return await upload_reference_to_apimart(
-            absolute_path_for(ref).read_bytes(),
-            ref.mime_type,
-        )
-
-    return list(await asyncio.gather(*(_upload_one(r) for r in ordered_refs)))
+        path = absolute_path_for(ref)
+        result.append((path.read_bytes(), ref.mime_type))
+    return result
 
 
 async def run_generation_job(generation_id: str) -> None:
@@ -83,20 +80,21 @@ async def run_generation_job(generation_id: str) -> None:
             if gen.action not in {"generate", "edit"}:
                 raise AppError("invalid_input", f"Unknown action: {gen.action}")
 
-            image_urls: list[str] = []
             ref_ids = await _load_reference_ids(gen)
 
             if gen.action == "edit" and not ref_ids:
                 raise AppError("invalid_input", "Missing reference files for edit mode")
 
+            # 读取本地参考图字节，由 proxy 层上传至 VOD 并换取 FileId
+            ref_files: list[tuple[bytes, str]] = []
             if ref_ids:
-                image_urls = await _build_image_urls(session, ref_ids)
+                ref_files = await _load_ref_files(session, ref_ids)
 
             results = await run_image_generation(
                 prompt=prompt,
                 size=size,
                 resolution=resolution,
-                image_urls=image_urls or None,
+                ref_files=ref_files or None,
             )
 
             output_ids: list[str] = []

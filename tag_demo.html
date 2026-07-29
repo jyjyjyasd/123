@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PosterForge - 风格Tag (纯标签展示) Demo</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', 'Noto Sans SC', sans-serif;
+      background-color: #f7f7f5;
+      color: #37352f;
+    }
+    .notion-shadow {
+      box-shadow: rgba(15, 15, 15, 0.05) 0px 0px 0px 1px, rgba(15, 15, 15, 0.1) 0px 3px 6px, rgba(15, 15, 15, 0.2) 0px 9px 24px;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 5px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: rgba(55, 53, 47, 0.15);
+      border-radius: 4px;
+    }
+    .tag-popover {
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      transform-origin: top left;
+    }
+    .tag-popover.hidden-popover {
+      opacity: 0;
+      transform: scale(0.95) translateY(-8px);
+      pointer-events: none;
+    }
+    .tag-popover.visible-popover {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+      pointer-events: auto;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-6 sm:p-12">
+
+  <!-- Container Box -->
+  <div class="w-full max-w-4xl bg-white rounded-2xl border border-[rgba(55,53,47,0.09)] shadow-sm p-6 sm:p-8 space-y-6 relative">
+    
+    <!-- Header info -->
+    <div class="flex items-center justify-between border-b border-gray-100 pb-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2 py-0.5 text-xs font-semibold bg-[#37352f] text-white rounded">PosterForge</span>
+          <h1 class="text-lg font-bold text-[#37352f]">简化测试版：取消分类与搜索，只展示风格Tag</h1>
+        </div>
+        <p class="text-xs text-gray-500 mt-1">点击【风格Tag】展开纯标签网格，点击任意标签即可直接套用</p>
+      </div>
+      <button onclick="resetDemo()" class="text-xs text-gray-500 hover:text-gray-800 flex items-center gap-1 border border-gray-200 rounded-md px-2.5 py-1 transition hover:bg-gray-50">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        重置
+      </button>
+    </div>
+
+    <!-- EXACT CONFIRM CARD STRUCTURE -->
+    <div class="bg-[#fafaf9] rounded-xl p-5 border border-gray-200/80 space-y-5 relative">
+      
+      <!-- 【上面】：选择风格 / 当前视觉风格描述文本框 -->
+      <div>
+        <div class="flex items-center justify-between mb-2">
+          <label class="text-[#787774] text-xs font-semibold uppercase tracking-wider flex items-center gap-2">
+            <span>选择风格 / 视觉风格描述</span>
+            <span id="current-tag-badge" class="hidden bg-[#37352f] text-white text-[10px] px-2 py-0.5 rounded font-medium">
+              Tag: <span id="current-tag-name">国风水墨</span>
+            </span>
+          </label>
+        </div>
+
+        <textarea id="style-textarea" rows="2" class="w-full text-xs font-semibold p-3 rounded-lg border border-gray-200 bg-white focus:outline-none focus:border-[#37352f] text-[#37352f] transition leading-relaxed" placeholder="未提供风格描述，可在此自主填写，或点击下方推荐风格/【风格Tag】直接套用..."></textarea>
+      </div>
+
+      <!-- 【下面】：推荐风格（前4个推荐风格 + 纯标签风格Tag） -->
+      <div class="pt-3 border-t border-gray-200/60">
+        <div class="flex items-center justify-between mb-2.5">
+          <span class="text-[#787774] text-xs font-semibold uppercase tracking-wider">推荐风格</span>
+          <button class="text-xs text-[#37352f] font-medium flex items-center gap-1 hover:bg-gray-200/60 px-2 py-1 rounded transition">
+            <svg class="w-3 h-3 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+            刷新风格
+          </button>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5 relative">
+          <!-- 4 AI Styles -->
+          <button onclick="selectAiStyle(1, '1. 温馨治愈插画风')" id="ai-style-1" class="style-btn px-3 py-1.5 text-xs rounded-md border border-gray-200 bg-white text-[#37352f] font-medium hover:border-gray-300 hover:bg-gray-50 transition shadow-2xs">
+            1. 温馨治愈插画风
+          </button>
+          <button onclick="selectAiStyle(2, '2. 极简纪实摄影风')" id="ai-style-2" class="style-btn px-3 py-1.5 text-xs rounded-md border border-gray-200 bg-white text-[#37352f] font-medium hover:border-gray-300 hover:bg-gray-50 transition shadow-2xs">
+            2. 极简纪实摄影风
+          </button>
+          <button onclick="selectAiStyle(3, '3. 现代简约扁平风')" id="ai-style-3" class="style-btn px-3 py-1.5 text-xs rounded-md border border-gray-200 bg-white text-[#37352f] font-medium hover:border-gray-300 hover:bg-gray-50 transition shadow-2xs">
+            3. 现代简约扁平风
+          </button>
+          <button onclick="selectAiStyle(4, '4. 温暖手绘涂鸦风')" id="ai-style-4" class="style-btn px-3 py-1.5 text-xs rounded-md border border-gray-200 bg-white text-[#37352f] font-medium hover:border-gray-300 hover:bg-gray-50 transition shadow-2xs">
+            4. 温暖手绘涂鸦风
+          </button>
+
+          <!-- 风格Tag 按钮 (纯标签显示，无搜索与分类) -->
+          <div class="relative inline-block">
+            <button id="tag-trigger-btn" onclick="togglePopover()" class="px-3 py-1.5 text-xs rounded-md border border-gray-300 bg-white text-[#37352f] font-semibold hover:border-gray-400 hover:bg-gray-50 transition flex items-center gap-1.5 shadow-2xs">
+              <svg class="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+              <span>风格Tag</span>
+              <svg id="arrow-icon" class="w-3.5 h-3.5 text-gray-500 transition-transform duration-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+            </button>
+
+            <!-- 纯标签 Popover -->
+            <div id="tag-popover" class="tag-popover hidden-popover absolute left-0 sm:left-auto sm:-right-4 top-full mt-2 w-[320px] bg-white rounded-xl notion-shadow z-50 p-3.5 border border-gray-200/90 text-[#37352f]">
+              <div class="flex items-center justify-between pb-2 border-b border-gray-100 mb-2.5">
+                <div class="flex items-center gap-1.5">
+                  <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                  <span class="font-bold text-xs text-[#37352f]">预置风格Tag库</span>
+                </div>
+                <button onclick="togglePopover(false)" class="text-gray-400 hover:text-gray-700 p-1 rounded-md hover:bg-gray-100 transition">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+              </div>
+
+              <!-- 纯 Tag 网格列表 (直接展示) -->
+              <div id="tag-grid" class="grid grid-cols-2 gap-2 max-h-[220px] overflow-y-auto custom-scrollbar pr-1">
+                <!-- Rendered via JS -->
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <script>
+    const TAG_DATA = [
+      { id: 'guofeng-ink', name: '国风水墨', desc: '写意水墨、金箔点缀', prompt: 'Traditional Chinese ink wash painting style, atmospheric ethereal background, gold leaf foil accents, delicate brushwork, elegant composition.' },
+      { id: 'dunhuang-mural', name: '敦煌壁画重彩', desc: '飞天重彩、壁画风化', prompt: 'Dunhuang mural art style, mineral pigment colors, gold linework, weathered ancient wall texture, oriental aesthetic.' },
+      { id: 'clay-3d', name: '粘土拟真', desc: '软萌粘土、柔光灯影', prompt: 'Cute 3D clay animation style, soft tactile plasticine material, isometric studio lighting, vibrant pastel palette, 8k.' },
+      { id: 'cyberpunk', name: '赛博朋克', desc: '霓虹光影、夜幕城市', prompt: 'Cyberpunk aesthetic, glowing neon cyan and magenta lighting, rain-slicked dark futuristic street, high contrast poster.' },
+      { id: 'glassmorphism', name: '玻璃磨砂拟物', desc: '通透玻璃、悬浮层次', prompt: 'Modern glassmorphism 3D render, translucent frosted glass UI elements, vibrant gradient background light, futuristic clean layout.' },
+      { id: 'minimalist-photo', name: '极简商用摄影', desc: '静物棚拍、自然柔光', prompt: 'Minimalist commercial photography, soft natural studio lighting, clean background, sharp focus, Hasselblad medium format.' },
+      { id: 'vintage-film', name: '复古胶片感', desc: '胶片颗粒、暖调采光', prompt: 'Vintage 35mm film photography grain, warm retro tone, soft sunlight flare, nostalgic emotional atmosphere.' },
+      { id: 'bauhaus-flat', name: '包豪斯几何', desc: '经典色块、撞色构成', prompt: 'Bauhaus style poster, bold red blue yellow color block composition, geometric shapes, retro textured paper, minimalist modern art.' },
+      { id: 'watercolor-doodle', name: '温暖绘本涂鸦', desc: '温馨手绘、水彩晕染', prompt: 'Warm hand-drawn children book illustration, soft watercolor textures, cozy comforting colors, whimsical doodle details.' }
+    ];
+
+    let isPopoverOpen = false;
+
+    window.addEventListener('DOMContentLoaded', () => { renderTags(); });
+
+    function togglePopover(forceState) {
+      const popover = document.getElementById('tag-popover');
+      const arrow = document.getElementById('arrow-icon');
+      isPopoverOpen = (typeof forceState === 'boolean') ? forceState : !isPopoverOpen;
+      if (isPopoverOpen) {
+        popover.classList.remove('hidden-popover');
+        popover.classList.add('visible-popover');
+        arrow.classList.add('rotate-180');
+      } else {
+        popover.classList.remove('visible-popover');
+        popover.classList.add('hidden-popover');
+        arrow.classList.remove('rotate-180');
+      }
+    }
+
+    function renderTags() {
+      const grid = document.getElementById('tag-grid');
+      grid.innerHTML = TAG_DATA.map(tag => `
+        <button onclick="selectTag('${tag.id}')" class="p-2 rounded-lg border border-gray-200 text-left bg-gray-50 hover:bg-[#37352f] hover:text-white transition group">
+          <div class="font-semibold text-xs truncate">${tag.name}</div>
+          <div class="text-[10px] text-gray-400 group-hover:text-gray-300 truncate mt-0.5">${tag.desc}</div>
+        </button>
+      `).join('');
+    }
+
+    function selectTag(id) {
+      const tag = TAG_DATA.find(t => t.id === id);
+      if (!tag) return;
+
+      const textarea = document.getElementById('style-textarea');
+      textarea.value = tag.prompt;
+      
+      document.querySelectorAll('.style-btn').forEach(btn => {
+        btn.className = "style-btn px-3 py-1.5 text-xs rounded-md border border-gray-200 bg-white text-[#37352f] font-medium hover:border-gray-300 hover:bg-gray-50 transition shadow-2xs";
+      });
+
+      document.getElementById('tag-trigger-btn').className = "px-3 py-1.5 text-xs rounded-md border border-[#37352f] bg-[#37352f] text-white font-semibold transition flex items-center gap-1.5 shadow-xs";
+
+      document.getElementById('current-tag-badge').classList.remove('hidden');
+      document.getElementById('current-tag-name').innerText = tag.name;
+
+      togglePopover(false);
+    }
+
+    function selectAiStyle(num, styleName) {
+      const textarea = document.getElementById('style-textarea');
+      textarea.value = styleName;
+
+      document.querySelectorAll('.style-btn').forEach((btn, idx) => {
+        if (idx === num - 1) {
+          btn.className = "style-btn px-3 py-1.5 text-xs rounded-md border border-[#37352f] bg-[#37352f] text-white font-bold transition shadow-xs";
+        } else {
+          btn.className = "style-btn px-3 py-1.5 text-xs rounded-md border border-gray-200 bg-white text-[#37352f] font-medium hover:border-gray-300 hover:bg-gray-50 transition shadow-2xs";
+        }
+      });
+
+      document.getElementById('tag-trigger-btn').className = "px-3 py-1.5 text-xs rounded-md border border-gray-300 bg-white text-[#37352f] font-semibold hover:border-gray-400 hover:bg-gray-50 transition flex items-center gap-1.5 shadow-2xs";
+      document.getElementById('current-tag-badge').classList.add('hidden');
+    }
+
+    function resetDemo() {
+      document.getElementById('style-textarea').value = '';
+      document.getElementById('current-tag-badge').classList.add('hidden');
+      document.querySelectorAll('.style-btn').forEach(btn => {
+        btn.className = "style-btn px-3 py-1.5 text-xs rounded-md border border-gray-200 bg-white text-[#37352f] font-medium hover:border-gray-300 hover:bg-gray-50 transition shadow-2xs";
+      });
+      document.getElementById('tag-trigger-btn').className = "px-3 py-1.5 text-xs rounded-md border border-gray-300 bg-white text-[#37352f] font-semibold hover:border-gray-400 hover:bg-gray-50 transition flex items-center gap-1.5 shadow-2xs";
+      togglePopover(false);
+    }
+  </script>
+</body>
+</html>

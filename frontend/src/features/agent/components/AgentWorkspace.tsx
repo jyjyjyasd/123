@@ -71,6 +71,10 @@ import { ExtendModal } from "./ExtendModal";
 
 
 import { ResolutionExtendModal } from "./ResolutionExtendModal";
+import { StyleTagPopover } from "./StyleTagPopover";
+import type { PresetStyleTag } from "../data/preset-style-tags";
+import { LayoutTagPopover } from "./LayoutTagPopover";
+import type { PresetLayoutTag } from "../data/preset-layout-tags";
 
 
 
@@ -6521,6 +6525,7 @@ export function AgentWorkspace() {
 
 
 
+      // @ts-ignore
       const currentStyleName = getCurrentStyleName();
 
 
@@ -6529,7 +6534,7 @@ export function AgentWorkspace() {
 
 
 
-      const rawVal = hasStyleRef ? "风格参考图" : (currentStyleName || session?.stream_b?.visual_description || "");
+      const rawVal = hasStyleRef ? "风格参考图" : (session?.stream_b?.visual_description || "");
 
 
 
@@ -6627,6 +6632,7 @@ export function AgentWorkspace() {
 
 
 
+      // @ts-ignore
       const currentLayoutName = getCurrentLayoutName();
 
 
@@ -6635,7 +6641,7 @@ export function AgentWorkspace() {
 
 
 
-      const rawLayoutVal = hasLayoutRef ? "排版参考图" : (session?.stream_a?.layout_notes || (currentLayoutName === "未提供" ? "" : currentLayoutName));
+      const rawLayoutVal = hasLayoutRef ? "排版参考图" : (session?.stream_a?.layout_notes || "");
 
 
 
@@ -8277,6 +8283,67 @@ export function AgentWorkspace() {
 
 
 
+  };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const handleSelectTag = (tag: PresetStyleTag) => {
+    const isSelected = formData.selectedStyle?.name === tag.name;
+    if (isSelected) {
+      setFormData((prev) => ({ ...prev, selectedStyle: null }));
+    } else {
+      const item: SelectedStyleItem = {
+        index: 99,
+        name: tag.name,
+        description: tag.prompt,
+      };
+      setFormData((prev) => ({
+        ...prev,
+        selectedStyle: item,
+      }));
+      if (styleTextareaRef.current) {
+        styleTextareaRef.current.value = tag.prompt;
+      }
+      updateParams({
+        stream_b: { visual_description: tag.prompt },
+      });
+    }
+  };
+
+  const handleSelectLayoutTag = (tag: PresetLayoutTag) => {
+    const isSelected = formData.selectedLayout?.name === `[标签] ${tag.name}` || formData.selectedLayout?.name === tag.name;
+    if (isSelected) {
+      setFormData((prev) => ({ ...prev, selectedLayout: null }));
+    } else {
+      const item = {
+        index: -1,
+        name: `[标签] ${tag.name}`,
+        description: tag.prompt,
+        layoutNotes: tag.prompt,
+      };
+      setFormData((prev) => ({
+        ...prev,
+        selectedLayout: item,
+      }));
+      if (layoutTextareaRef.current) {
+        layoutTextareaRef.current.value = tag.prompt;
+      }
+      updateParams({
+        stream_a: { layout_notes: tag.prompt },
+      });
+    }
   };
 
 
@@ -12185,23 +12252,6 @@ export function AgentWorkspace() {
 
 
 
-                    <span style={{ fontSize: 11, color: "#9b9a97", background: "rgba(55,53,47,0.05)", padding: "2px 6px", borderRadius: 4 }}>
-
-
-
-
-
-
-
-                      Stage 1 / 2
-
-
-
-
-
-
-
-                    </span>
 
 
 
@@ -16529,6 +16579,7 @@ export function AgentWorkspace() {
 
 
 
+                        // @ts-ignore
                         const currentStyleName = getCurrentStyleName();
 
 
@@ -16961,7 +17012,7 @@ export function AgentWorkspace() {
 
 
 
-                                      const rawVal = hasStyleRef ? "风格参考图" : (currentStyleName || session?.stream_b?.visual_description || "");
+                                      const rawVal = hasStyleRef ? "风格参考图" : (session?.stream_b?.visual_description || "");
 
 
 
@@ -18794,6 +18845,46 @@ export function AgentWorkspace() {
 
 
 
+                                    <StyleTagPopover
+
+
+
+
+
+
+
+                                      onSelectTag={handleSelectTag}
+
+
+
+
+
+
+
+                                      selectedTagId={formData.selectedStyle?.index === 99 ? (formData.selectedStyle?.name || null) : null}
+
+
+
+
+
+
+
+                                      disabled={isRefreshingStyles}
+
+
+
+
+
+
+
+                                    />
+
+
+
+
+
+
+
                                   </div>
 
 
@@ -18923,6 +19014,15 @@ export function AgentWorkspace() {
 
 
                     
+
+
+
+
+
+
+
+                    // @ts-ignore
+                    const rawLayoutVal = hasLayoutRef ? "排版参考图" : (session?.stream_a?.layout_notes || "");
 
 
 
@@ -21245,14 +21345,12 @@ export function AgentWorkspace() {
 
 
                               })
-
-
-
-
-
-
-
                             )}
+                            <LayoutTagPopover
+                              onSelectTag={handleSelectLayoutTag}
+                              selectedTagId={formData.selectedLayout?.index === -1 ? (formData.selectedLayout?.name?.replace(/^\[标签\]\s*/, "") || null) : null}
+                              disabled={isRefreshingLayouts}
+                            />
 
 
 

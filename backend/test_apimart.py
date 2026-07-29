@@ -1,38 +1,49 @@
+"""快速验证脚本：测试 apiyi 图像生成接口（文生图 + 图生图）。
+
+用法：
+    cd backend
+    uv run python test_apimart.py
+"""
 import asyncio
 import traceback
-from app.proxy import submit_image_task
+from app.proxy import run_image_generation
+
 
 async def main():
     prompt = "A cute puppy playing in the grass"
-    
+
     # 1. 测试文生图 (text-to-image)
-    print("--- 1. Testing Text-to-Image (image_urls=None) ---")
+    print("--- 1. Testing Text-to-Image ---")
     try:
-        task_id = await submit_image_task(
+        results = await run_image_generation(
             prompt=prompt,
             size="4:3",
             resolution="1k",
-            image_urls=None
         )
-        print(f"Text-to-Image submission successful! Task ID: {task_id}")
-    except Exception as e:
-        print("Text-to-Image submission failed:")
+        print(f"Text-to-Image OK! Got {len(results)} image(s), mime={results[0].mime}, bytes={len(results[0].bytes_)}")
+    except Exception:
+        print("Text-to-Image FAILED:")
         traceback.print_exc()
-        
-    # 2. 测试图生图 (image-to-image with a mock/real apimart uploaded URL)
-    print("\n--- 2. Testing Image-to-Image (with uploaded ref URL) ---")
-    ref_url = "https://upload.apib.ai/f/image/9998218238469307-3c1779f4-7863-4f3d-8514-ae0ebb04b45c-ref.png"
+
+    # 2. 测试图生图（需要本地真实图片，此处用内存中生成的 1x1 PNG 做测试占位）
+    print("\n--- 2. Testing Image-to-Image (1px placeholder) ---")
+    import base64
+    # 最小合法 PNG (1x1 透明)
+    tiny_png = base64.b64decode(
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="
+    )
     try:
-        task_id = await submit_image_task(
+        results = await run_image_generation(
             prompt=prompt,
             size="1:1",
             resolution="1k",
-            image_urls=[ref_url]
+            ref_files=[(tiny_png, "image/png")],
         )
-        print(f"Image-to-Image submission successful! Task ID: {task_id}")
-    except Exception as e:
-        print("Image-to-Image submission failed:")
+        print(f"Image-to-Image OK! Got {len(results)} image(s), mime={results[0].mime}, bytes={len(results[0].bytes_)}")
+    except Exception:
+        print("Image-to-Image FAILED:")
         traceback.print_exc()
+
 
 if __name__ == "__main__":
     asyncio.run(main())

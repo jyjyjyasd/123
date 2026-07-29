@@ -1,19 +1,17 @@
-"""HTTP client for apimart gpt-image-2 (async task model).
+"""HTTP client for Tencent Cloud VOD gpt-image-2 (Async Polling API).
 
-contract（CLAUDE.md §7）:
-- 上传参考图：POST /v1/uploads/images (multipart) → { url, ... }
-  - 返回的 url 72h 有效，可直接用作 image_urls 元素
-- 提交：POST /v1/images/generations (JSON)
-  - 文生图：仅 prompt + size
-  - 图生图：附加 image_urls 字符串数组，元素为 apimart upload 返回的 url
-- 提交响应：{ code, data: [{ status: "submitted", task_id }] }
-- 轮询：GET /v1/tasks/{task_id}
-- 完成响应：data.result.images[0].url[0]
-- 下载稳定 URL（apimart 已镜像到 R2），存到我们自己的本地磁盘
+contract（AGENTS.md §7）:
+- 文生图与图生图：POST CreateAigcImageTask (JSON)
+  - 必填：Prompt, ModelName="OG", ModelVersion (image2_low/medium/high)
+  - 尺寸：OutputConfig.Resolution (1K/2K/4K), OutputConfig.AspectRatio (比例)
+  - 响应异步返回：TaskId
+- 轮询：GET DescribeTaskDetail
+  - 等待直至状态为 FINISH_SUCCESS 或 FINISH_FAIL
 """
 from __future__ import annotations
 
 import asyncio
+import base64
 import json as _json
 import logging
 import time
@@ -21,6 +19,9 @@ from dataclasses import dataclass
 from typing import Any, Optional
 
 import httpx
+from tencentcloud.common import credential
+from tencentcloud.vod.v20180717 import vod_client, models
+from qcloud_cos import CosConfig, CosS3Client
 
 from app.config import Settings, get_settings
 from app.errors import AppError
@@ -28,7 +29,7 @@ from app.errors import AppError
 logger = logging.getLogger("posterforge.proxy")
 
 
-def json_dumps(s: str) -> str:
+def json_dumps(s: Any) -> str:
     return _json.dumps(s, ensure_ascii=False)
 
 
@@ -36,356 +37,287 @@ def json_dumps(s: str) -> str:
 class ImageResult:
     bytes_: bytes
     mime: str
-    revised_prompt: Optional[str]  # apimart 不返回；保留字段方便上层无脑赋值
+    revised_prompt: Optional[str]
 
 
-def _new_client(settings: Settings) -> httpx.AsyncClient:
-    return httpx.AsyncClient(
-        base_url=settings.apimart_base_url.rstrip("/"),
-        headers={"Authorization": f"Bearer {settings.apimart_api_key}"},
-        timeout=httpx.Timeout(settings.request_timeout_seconds),
+# ── 清晰度与尺寸 ─────────────────────────────────────────────────────
+
+# 前端/DB 使用 1k/2k/4k，Tencent VOD OutputConfig.Resolution 接受 "1K", "2K", "4K"
+def _map_resolution(resolution: str) -> str:
+    r = resolution.upper()
+    if r in {"1K", "2K", "4K"}:
+        return r
+    return "1K"
+
+
+# 图生图：apiyi /v1/images/edits 接受的像素尺寸白名单（保留语义防止外部依赖）
+_EDIT_VALID_PIXEL_SIZES = {
+    "1024x1024", "1536x1024", "1024x1536",
+    "768x1024", "1536x1152", "1536x864", "864x1536", "1536x512",
+    "auto"
+}
+
+# ── 腾讯云 VOD 客户端与 SubAppId 发现 ───────────────────────────────────
+
+_global_sub_app_id: Optional[int] = None
+
+def _get_vod_client(settings: Settings) -> vod_client.VodClient:
+    cred = credential.Credential(
+        settings.tencentcloud_secret_id,
+        settings.tencentcloud_secret_key
     )
+    return vod_client.VodClient(cred, "")
 
 
-def _classify_status_error(exc: httpx.HTTPStatusError) -> AppError:
-    body: dict = {}
-    try:
-        body = exc.response.json()
-    except Exception:
-        body = {"raw": exc.response.text[:500]}
-    err = body.get("error") or {}
-    upstream_code = (err.get("code") or "")
-    if isinstance(upstream_code, int):
-        upstream_code = str(upstream_code)
-    upstream_code = upstream_code.lower()
-    upstream_msg = err.get("message") or exc.response.text[:200] or "upstream error"
-    logger.warning(
-        '{"event":"upstream_error","status":%d,"upstream_code":"%s","upstream_msg":%s}',
-        exc.response.status_code, upstream_code, json_dumps(upstream_msg),
-    )
+def _get_sub_app_id(settings: Settings, client: vod_client.VodClient) -> int:
+    global _global_sub_app_id
+    if _global_sub_app_id is not None:
+        return _global_sub_app_id
 
-    status = exc.response.status_code
-    text = (upstream_msg or "").lower()
-
-    if status == 400 and ("content" in text or "审核" in upstream_msg or "敏感" in upstream_msg):
-        return AppError("content_policy", "Prompt 触发了内容审核", status_code=400)
-    if status == 402:
-        return AppError("payment_required", "代理账号余额不足，请联系管理员充值", status_code=402)
-    if status == 429:
-        return AppError("rate_limited", "请求过于频繁，请稍后再试", status_code=429)
-    if 500 <= status < 600:
-        return AppError("upstream_error", f"上游 {status}: {upstream_msg}", status_code=502)
-    if status == 401:
-        return AppError("upstream_error", "代理 API key 无效", status_code=502)
-    if status == 400:
-        return AppError("invalid_input", upstream_msg, status_code=400)
-    if status == 404:
-        return AppError("not_found", upstream_msg, status_code=404)
-    return AppError("upstream_error", f"上游 {status}: {upstream_msg}", status_code=502)
-
-
-# Retry budget: 429/5xx/network 4 attempts (1+2+4=7s backoff)；timeout 2 attempts。
-_MAX_ATTEMPTS_TRANSIENT = 4
-_MAX_ATTEMPTS_TIMEOUT = 2
-
-
-async def _request_with_retry(
-    settings: Settings,
-    method: str,
-    path: str,
-    *,
-    json: Optional[dict] = None,
-) -> httpx.Response:
-    last_exc: Optional[Exception] = None
-    for attempt in range(_MAX_ATTEMPTS_TRANSIENT):
-        t0 = time.monotonic()
+    if settings.tencentcloud_sub_app_id:
         try:
-            async with _new_client(settings) as client:
-                resp = await client.request(method, path, json=json)
-                resp.raise_for_status()
-                if attempt > 0:
-                    logger.info(
-                        '{"event":"apimart_retry_recovered","path":"%s","attempt":%d,"elapsed_s":%.2f}',
-                        path, attempt, time.monotonic() - t0,
-                    )
-                return resp
-        except httpx.HTTPStatusError as e:
-            last_exc = e
-            status = e.response.status_code
-            elapsed = time.monotonic() - t0
-            retriable = status == 429 or 500 <= status < 600
-            if retriable and attempt < _MAX_ATTEMPTS_TRANSIENT - 1:
-                delay = 2.0 * (2 ** attempt) if status == 429 else float(1 << attempt)
-                logger.warning(
-                    '{"event":"apimart_retrying","path":"%s","attempt":%d,"reason":"http_%d","elapsed_s":%.2f,"delay_s":%.1f}',
-                    path, attempt, status, elapsed, delay,
-                )
-                await asyncio.sleep(delay)
-                continue
-            raise _classify_status_error(e) from e
-        except (httpx.TimeoutException, httpx.NetworkError, OSError) as e:
-            last_exc = e
-            elapsed = time.monotonic() - t0
-            is_timeout = isinstance(e, httpx.TimeoutException)
-            max_attempts = _MAX_ATTEMPTS_TIMEOUT if is_timeout else _MAX_ATTEMPTS_TRANSIENT
-            if attempt < max_attempts - 1:
-                delay = float(1 << attempt)
-                logger.warning(
-                    '{"event":"apimart_retrying","path":"%s","attempt":%d,"reason":"%s","exc":%s,"elapsed_s":%.2f,"delay_s":%.1f}',
-                    path, attempt, type(e).__name__, json_dumps(repr(e)[:200]), elapsed, delay,
-                )
-                await asyncio.sleep(delay)
-                continue
-            logger.warning(
-                '{"event":"apimart_giveup","path":"%s","attempts":%d,"reason":"%s","exc":%s,"elapsed_s":%.2f}',
-                path, attempt + 1, type(e).__name__, json_dumps(repr(e)[:200]), elapsed,
-            )
-            if is_timeout:
-                raise AppError("timeout", "代理 API 超时", status_code=504) from e
-            raise AppError("upstream_error", f"代理网络错误: {e!s}"[:200], status_code=502) from e
-    raise AppError("unknown", str(last_exc) if last_exc else "unknown")
+            _global_sub_app_id = int(settings.tencentcloud_sub_app_id)
+            return _global_sub_app_id
+        except ValueError:
+            pass
+    
+    # Auto-discover
+    try:
+        req = models.DescribeSubAppIdsRequest()
+        resp = client.DescribeSubAppIds(req)
+        sub_apps = resp.SubAppIdInfoSet
+        if sub_apps:
+            _global_sub_app_id = sub_apps[0].SubAppId
+        else:
+            _global_sub_app_id = 0
+    except Exception as e:
+        logger.error(f"Failed to discover SubAppId: {e}")
+        _global_sub_app_id = 0
+    return _global_sub_app_id
 
 
-_UPLOAD_EXT_BY_MIME = {
-    "image/png": "png",
-    "image/jpeg": "jpg",
-    "image/webp": "webp",
-}
+# ── 参考图上传 (VOD 媒资中转) ──────────────────────────────────────────
 
-
-async def upload_reference_to_apimart(
-    data: bytes,
+async def _upload_reference_to_vod(
+    img_bytes: bytes,
     mime: str,
-    *,
-    filename: Optional[str] = None,
-    settings: Optional[Settings] = None,
+    settings: Settings,
+    client: vod_client.VodClient,
+    sub_app_id: int
 ) -> str:
-    """把参考图字节传给 apimart 的 /v1/uploads/images，拿到 72h 有效的 url。
-
-    取代 v0.8 早期的 base64 data URI 内联方案 — 后者随 apimart 文档变更被弃用，
-    且内存峰值约 4× 原图。改走专用上传端点后请求体小一个量级。
+    """上传本地字节至腾讯云 VOD，返回 FileId。
+    
+    使用 asyncio.to_thread 包装阻塞的 SDK 调用。
     """
-    settings = settings or get_settings()
-    mime = (mime or "").lower() or "image/png"
-    ext = _UPLOAD_EXT_BY_MIME.get(mime, "png")
-    name = filename or f"ref.{ext}"
-
-    async with _new_client(settings) as client:
-        # 仅在网络/5xx/429 上重试；上传是有状态写入，4xx 直接抛
-        last_exc: Optional[Exception] = None
-        for attempt in range(_MAX_ATTEMPTS_TRANSIENT):
-            t0 = time.monotonic()
-            try:
-                resp = await client.post(
-                    "/v1/uploads/images",
-                    files={"file": (name, data, mime)},
-                )
-                resp.raise_for_status()
-                body = resp.json()
-                url = body.get("url")
-                if not isinstance(url, str) or not url:
-                    raise AppError("upstream_error", "apimart 上传未返回 url")
-                logger.info(
-                    '{"event":"apimart_upload","bytes":%d,"mime":"%s","elapsed_s":%.2f}',
-                    len(data), mime, time.monotonic() - t0,
-                )
-                return url
-            except httpx.HTTPStatusError as e:
-                last_exc = e
-                status = e.response.status_code
-                if (status == 429 or 500 <= status < 600) and attempt < _MAX_ATTEMPTS_TRANSIENT - 1:
-                    delay = 2.0 * (2 ** attempt) if status == 429 else float(1 << attempt)
-                    logger.warning(
-                        '{"event":"apimart_upload_retrying","attempt":%d,"reason":"http_%d","delay_s":%.1f}',
-                        attempt, status, delay,
-                    )
-                    await asyncio.sleep(delay)
-                    continue
-                raise _classify_status_error(e) from e
-            except (httpx.TimeoutException, httpx.NetworkError, OSError) as e:
-                last_exc = e
-                is_timeout = isinstance(e, httpx.TimeoutException)
-                max_attempts = _MAX_ATTEMPTS_TIMEOUT if is_timeout else _MAX_ATTEMPTS_TRANSIENT
-                if attempt < max_attempts - 1:
-                    delay = float(1 << attempt)
-                    logger.warning(
-                        '{"event":"apimart_upload_retrying","attempt":%d,"reason":"%s","delay_s":%.1f}',
-                        attempt, type(e).__name__, delay,
-                    )
-                    await asyncio.sleep(delay)
-                    continue
-                if is_timeout:
-                    raise AppError("timeout", "上传参考图到代理超时", status_code=504) from e
-                raise AppError("upstream_error", f"上传参考图网络错误: {e!s}"[:200], status_code=502) from e
-        raise AppError("unknown", str(last_exc) if last_exc else "upload retry exhausted")
+    def _do_upload() -> str:
+        # 1. ApplyUpload
+        apply_req = models.ApplyUploadRequest()
+        apply_req.SubAppId = sub_app_id
+        ext = mime.split("/")[-1]
+        if ext == "jpeg":
+            ext = "jpg"
+        apply_req.MediaType = ext
+        
+        apply_resp = client.ApplyUpload(apply_req)
+        
+        # 2. Upload to COS
+        cos_config = CosConfig(
+            Region=apply_resp.StorageRegion,
+            SecretId=apply_resp.TempCertificate.SecretId,
+            SecretKey=apply_resp.TempCertificate.SecretKey,
+            Token=apply_resp.TempCertificate.Token
+        )
+        cos_client = CosS3Client(cos_config)
+        cos_client.put_object(
+            Bucket=apply_resp.StorageBucket,
+            Body=img_bytes,
+            Key=apply_resp.MediaStoragePath
+        )
+        
+        # 3. CommitUpload
+        commit_req = models.CommitUploadRequest()
+        commit_req.SubAppId = sub_app_id
+        commit_req.VodSessionKey = apply_resp.VodSessionKey
+        commit_resp = client.CommitUpload(commit_req)
+        return commit_resp.FileId
+        
+    try:
+        return await asyncio.to_thread(_do_upload)
+    except Exception as e:
+        logger.error(f"Upload reference image failed: {e}")
+        raise AppError("upstream_error", f"上传参考图失败: {e!s}"[:200])
 
 
-# 9:32 is mapped to "1:3" which is natively supported by apimart.
+# ── 任务轮询与图片下载 ───────────────────────────────────────────────
+
+_POLL_INTERVAL_S = 3.0
+_MAX_POLL_TIME_S = 180.0
+
+async def _poll_task_until_done(
+    task_id: str,
+    settings: Settings,
+    client: vod_client.VodClient,
+    sub_app_id: int
+) -> list[str]:
+    """轮询 CreateAigcImageTask 结果，返回图片 URL 列表。"""
+    
+    def _check() -> Optional[list[str]]:
+        req = models.DescribeTaskDetailRequest()
+        req.TaskId = task_id
+        req.SubAppId = sub_app_id
+        resp = client.DescribeTaskDetail(req)
+        status = resp.Status
+        if status == "FINISH":
+            # 生图任务的结果在 AigcImageTask.Output
+            if hasattr(resp, "AigcImageTask") and resp.AigcImageTask:
+                if resp.AigcImageTask.Status == "FAIL":
+                    raise AppError("upstream_error", f"任务失败: {resp.AigcImageTask.ErrCodeExt}")
+                if hasattr(resp.AigcImageTask, "Output") and resp.AigcImageTask.Output:
+                    file_infos = getattr(resp.AigcImageTask.Output, "FileInfos", [])
+                    if file_infos:
+                        urls = [f.FileUrl for f in file_infos if hasattr(f, "FileUrl") and f.FileUrl]
+                        if urls:
+                            return urls
+            raise AppError("upstream_error", "任务完成但未返回图片 URL")
+        elif status == "FAIL":
+            err_msg = resp.ErrCodeExt or resp.Message or "Unknown task error"
+            if "Policy" in err_msg or "Compliance" in err_msg:
+                raise AppError("content_policy", "触发了内容审核", status_code=400)
+            raise AppError("upstream_error", f"上游任务失败: {err_msg}")
+        return None
+
+    t0 = time.monotonic()
+    while time.monotonic() - t0 < _MAX_POLL_TIME_S:
+        try:
+            urls = await asyncio.to_thread(_check)
+            if urls is not None:
+                return urls
+        except AppError:
+            raise
+        except Exception as e:
+            logger.warning(f"Polling failed: {e}")
+        
+        await asyncio.sleep(_POLL_INTERVAL_S)
+
+    raise AppError("timeout", "任务轮询超时", status_code=504)
 
 
-def _map_apimart_size(size: str, resolution: str = "1k") -> str:
-    s = size.upper()
-    if s == "A4":
-        return "3:4"
-    if s == "A4_HORIZONTAL":
-        return "4:3"
-    if s == "BANNER":
-        return "3:1"
-    # 9:32 -> ratio string (apimart rejects "9:32" ratio string, map to supported "1:3" ratio)
-    if s == "9:32":
-        return "1:3"
-    return size.lower()
+async def _download_url(url: str, *, settings: Optional[Settings] = None) -> tuple[bytes, str]:
+    """下载图片 URL。"""
+    _settings = settings or get_settings()
+    async with httpx.AsyncClient(timeout=httpx.Timeout(_settings.request_timeout_seconds)) as client:
+        r = await client.get(url)
+        r.raise_for_status()
+        mime = r.headers.get("content-type", "image/png").split(";")[0].strip()
+        return r.content, mime
 
 
-# edit（图生图）模式下 apimart 仅接受的像素尺寸白名单
-_EDIT_VALID_SIZES = {"1024x1024", "1536x1024", "1024x1536", "auto"}
+# ── 核心生图逻辑 ────────────────────────────────────────────────────────
 
-# 非原生比例 → edit 模式下的最近像素尺寸映射
-_EDIT_RATIO_TO_PIXEL: dict[str, str] = {
-    "4:3":  "1536x1024",
-    "3:4":  "1024x1536",
-    "16:9": "1536x1024",
-    "9:16": "1024x1536",
-    "3:2":  "1536x1024",
-    "2:3":  "1024x1536",
-    "9:32": "1024x1536",
-    "1:3":  "1024x1536",
-    "1:1":  "1024x1024",
-}
+async def _create_image_task(
+    prompt: str,
+    size: str,
+    resolution: str,
+    ref_file_ids: Optional[list[str]],
+    settings: Settings,
+    client: vod_client.VodClient,
+    sub_app_id: int
+) -> str:
+    """提交 AIGC 生图任务，返回 TaskId。"""
+    def _do_submit() -> str:
+        req = models.CreateAigcImageTaskRequest()
+        
+        params: dict[str, Any] = {
+            "SubAppId": sub_app_id,
+            "ModelName": "OG",
+            "ModelVersion": "image2_medium",
+            "Prompt": prompt,
+            "OutputConfig": {
+                "StorageMode": "Temporary",
+                "Resolution": _map_resolution(resolution),
+                "OutputImageCount": 1
+            }
+        }
+        
+        # 尺寸处理
+        size_key = size.lower().replace(" ", "")
+        if size_key == "auto":
+            params["ExtInfo"] = '{"AdditionalParameters": "{\\"size\\":\\"auto\\"}"}'
+        elif "x" in size_key:
+            params["ExtInfo"] = '{"AdditionalParameters": "{\\"size\\":\\"' + size_key + '\\"}"}'
+        else:
+            params["OutputConfig"]["AspectRatio"] = size
+            
+        # 参考图处理
+        if ref_file_ids:
+            # Type must be 'FileId' when using VOD Media
+            params["FileInfos"] = [{"Type": "FileId", "FileId": fid} for fid in ref_file_ids]
+            
+        req.from_json_string(_json.dumps(params))
+        resp = client.CreateAigcImageTask(req)
+        return resp.TaskId
+
+    try:
+        return await asyncio.to_thread(_do_submit)
+    except Exception as e:
+        logger.error(f"Submit image task failed: {e}")
+        # 这里可做更细致的错误分类
+        raise AppError("upstream_error", f"提交生图失败: {e!s}"[:200])
 
 
-def _map_size_for_edit(size: str) -> str:
-    """图生图模式下，将比例字符串映射为 apimart edit API 实际接受的像素尺寸。"""
-    mapped = _map_apimart_size(size)
-    if mapped in _EDIT_VALID_SIZES:
-        return mapped
-    return _EDIT_RATIO_TO_PIXEL.get(mapped, "1024x1024")
-
-
-async def submit_image_task(
+async def generate_image_text_to_image(
     *,
     prompt: str,
     size: str,
     resolution: str = "1k",
-    image_urls: Optional[list[str]] = None,
     settings: Optional[Settings] = None,
-) -> str:
-    """提交一个图像生成任务，返回 task_id。
-
-    - image_urls 为空 → 文生图
-    - image_urls 非空 → 图生图（每个 url 是 apimart 自家上传端点返回的 72h 链接）
-    - size 'auto' 仅图生图允许；底层 apimart 接受 auto 作为 size 值
-    - resolution 控制 apimart 计费 / 输出像素档位（1k/2k/4k）。size='auto' 时
-      apimart 文档说 resolution 仍然会被解析但实际像素跟随参考图 — 安全起见照传
-    """
+) -> list[ImageResult]:
+    """文生图"""
     settings = settings or get_settings()
-    if image_urls:
-        mapped_size = _map_size_for_edit(size)
-    else:
-        mapped_size = _map_apimart_size(size, resolution)
-    payload: dict[str, Any] = {
-        "model": "gpt-image-2",
-        "prompt": prompt,
-        "n": 1,
-        "size": mapped_size,
-        "resolution": resolution,
-    }
-    if image_urls:
-        payload["image_urls"] = image_urls
-
-    logger.info(
-        '{"event":"apimart_submit","size":"%s","mapped_size":"%s","resolution":"%s","ref_count":%d,"prompt_len":%d}',
-        size, mapped_size, resolution, len(image_urls or []), len(prompt),
-    )
-    resp = await _request_with_retry(settings, "POST", "/v1/images/generations", json=payload)
-    body = resp.json()
-    items = (body or {}).get("data") or []
-    if not items:
-        raise AppError("upstream_error", "代理返回空 data")
-    task_id = items[0].get("task_id")
-    if not task_id:
-        raise AppError("upstream_error", "代理未返回 task_id")
-    return task_id
+    client = _get_vod_client(settings)
+    sub_app_id = _get_sub_app_id(settings, client)
+    
+    task_id = await _create_image_task(prompt, size, resolution, None, settings, client, sub_app_id)
+    urls = await _poll_task_until_done(task_id, settings, client, sub_app_id)
+    
+    results = []
+    for url in urls:
+        img_bytes, mime = await _download_url(url, settings=settings)
+        results.append(ImageResult(bytes_=img_bytes, mime=mime, revised_prompt=None))
+    return results
 
 
-async def poll_task_until_done(
-    task_id: str,
+async def generate_image_with_references(
     *,
+    prompt: str,
+    size: str,
+    resolution: str = "1k",
+    ref_files: list[tuple[bytes, str]],
     settings: Optional[Settings] = None,
-) -> list[str]:
-    """轮询任务直到 completed / failed / 超时，返回 result.images[0].url 数组。
-
-    文档建议：先等 10–20s 再查，3–5s 间隔，单图 30–60s 完成。
-    超过 apimart_poll_max_seconds 抛 timeout。
-    """
+) -> list[ImageResult]:
+    """图生图（参考图预先上传到 VOD 媒资）"""
     settings = settings or get_settings()
-    deadline = time.monotonic() + settings.apimart_poll_max_seconds
-    # 首次查询前的等待（让上游有时间真正开始处理）
-    await asyncio.sleep(settings.apimart_poll_initial_delay_seconds)
-
-    while True:
-        resp = await _request_with_retry(settings, "GET", f"/v1/tasks/{task_id}")
-        body = resp.json()
-        data = body.get("data") or {}
-        status = data.get("status")
-
-        if status == "completed":
-            result = data.get("result") or {}
-            images = result.get("images") or []
-            urls: list[str] = []
-            for img in images:
-                u = img.get("url")
-                if isinstance(u, list):
-                    urls.extend([x for x in u if x])
-                elif isinstance(u, str):
-                    urls.append(u)
-            if not urls:
-                raise AppError("upstream_error", "任务完成但 result.images 为空")
-            logger.info(
-                '{"event":"apimart_task_done","task_id":"%s","img_count":%d,"actual_time":%s,"cost":%s}',
-                task_id, len(urls), data.get("actual_time"), data.get("cost"),
-            )
-            return urls
-
-        if status == "failed":
-            err = (data.get("error") or {}) if isinstance(data.get("error"), dict) else {}
-            msg = err.get("message") or "任务失败"
-            text = msg.lower()
-            if "content" in text or "审核" in msg or "敏感" in msg or "violat" in text:
-                raise AppError("content_policy", "Prompt 触发了内容审核", status_code=400)
-            raise AppError("upstream_error", f"上游任务失败: {msg}"[:300], status_code=502)
-
-        # submitted / processing / 其它 → 继续等
-        if time.monotonic() >= deadline:
-            raise AppError("timeout", f"任务 {task_id} 在 {settings.apimart_poll_max_seconds}s 内未完成", status_code=504)
-        await asyncio.sleep(settings.apimart_poll_interval_seconds)
-
-
-async def download_image(url: str, *, settings: Optional[Settings] = None) -> tuple[bytes, str]:
-    """从 apimart 返回的稳定 URL 下载图片。
-
-    apimart 已把上游临时签名链接镜像到自家 R2，链接稳定 24h，但建议尽快转存到本地。
-    """
-    settings = settings or get_settings()
-    # 用独立的 httpx client：base_url 不能用，apimart R2 是另一个域
-    async with httpx.AsyncClient(timeout=httpx.Timeout(settings.request_timeout_seconds)) as client:
-        for attempt in range(_MAX_ATTEMPTS_TRANSIENT):
-            try:
-                r = await client.get(url)
-                r.raise_for_status()
-                mime = r.headers.get("content-type", "image/png").split(";")[0].strip()
-                return r.content, mime
-            except (httpx.TimeoutException, httpx.NetworkError, OSError, httpx.HTTPStatusError) as e:
-                if attempt < _MAX_ATTEMPTS_TRANSIENT - 1:
-                    delay = float(1 << attempt)
-                    logger.warning(
-                        '{"event":"download_retrying","attempt":%d,"exc":%s,"delay_s":%.1f}',
-                        attempt, json_dumps(repr(e)[:200]), delay,
-                    )
-                    await asyncio.sleep(delay)
-                    continue
-                raise AppError("upstream_error", f"下载图片失败: {e!s}"[:200], status_code=502) from e
-        raise AppError("unknown", "download retry exhausted")
+    client = _get_vod_client(settings)
+    sub_app_id = _get_sub_app_id(settings, client)
+    
+    # 1. 上传所有参考图
+    upload_tasks = []
+    for img_bytes, mime in ref_files:
+        upload_tasks.append(_upload_reference_to_vod(img_bytes, mime, settings, client, sub_app_id))
+    
+    ref_file_ids = await asyncio.gather(*upload_tasks)
+    
+    # 2. 提交生图任务
+    task_id = await _create_image_task(prompt, size, resolution, ref_file_ids, settings, client, sub_app_id)
+    
+    # 3. 轮询并下载
+    urls = await _poll_task_until_done(task_id, settings, client, sub_app_id)
+    
+    results = []
+    for url in urls:
+        img_bytes, mime = await _download_url(url, settings=settings)
+        results.append(ImageResult(bytes_=img_bytes, mime=mime, revised_prompt=None))
+    return results
 
 
 async def run_image_generation(
@@ -393,25 +325,23 @@ async def run_image_generation(
     prompt: str,
     size: str,
     resolution: str = "1k",
+    ref_files: Optional[list[tuple[bytes, str]]] = None,
     image_urls: Optional[list[str]] = None,
     settings: Optional[Settings] = None,
 ) -> list[ImageResult]:
-    """端到端：submit → poll → download。jobs 层只调这一个函数。
-
-    参考图上传走 upload_reference_to_apimart，由 jobs 层先并发上传拿到 url 列表，
-    再传进来 — 上传出错与 generation 任务失败要区分开，分两个阶段处理。
-    """
+    """统一入口：jobs 层调用此函数。"""
     settings = settings or get_settings()
-    task_id = await submit_image_task(
+    if ref_files:
+        return await generate_image_with_references(
+            prompt=prompt,
+            size=size,
+            resolution=resolution,
+            ref_files=ref_files,
+            settings=settings,
+        )
+    return await generate_image_text_to_image(
         prompt=prompt,
         size=size,
         resolution=resolution,
-        image_urls=image_urls,
         settings=settings,
     )
-    urls = await poll_task_until_done(task_id, settings=settings)
-    results: list[ImageResult] = []
-    for url in urls:
-        data, mime = await download_image(url, settings=settings)
-        results.append(ImageResult(bytes_=data, mime=mime, revised_prompt=None))
-    return results

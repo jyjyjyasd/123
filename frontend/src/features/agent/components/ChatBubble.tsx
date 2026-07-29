@@ -3,7 +3,7 @@ import {
   extractLayoutRecommendations,
   extractStyleRecommendations,
   parseSectionedMessage,
-  stripJsonBlock,
+  cleanIntroText,
 } from "../section-parser";
 import type { AgentSession, ClarifyMessage } from "../types";
 
@@ -877,7 +877,7 @@ export function ChatBubble({
   }
 
   const { intro, sections } = parseSectionedMessage(content);
-  const cleanIntro = stripJsonBlock(intro);
+  const cleanIntro = cleanIntroText(intro);
 
   return (
     <div style={{ marginBottom: 16 }}>
