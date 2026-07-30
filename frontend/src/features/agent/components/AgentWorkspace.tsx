@@ -100,7 +100,11 @@ import { RotateCcw, RotateCw, Trash2 } from "lucide-react";
 
 
 
-import type { ClarifyMessage } from "../types";
+import type { ClarifyMessage, StyleRecommendation, LayoutRecommendation } from "../types";
+
+
+
+import { useDesignStore } from "../design-store";
 
 
 
@@ -852,7 +856,6 @@ const DEFAULT_LAYOUT_RECS_9_32 = [
 
 
 
-interface SelectedStyleItem {
 
 
 
@@ -860,7 +863,6 @@ interface SelectedStyleItem {
 
 
 
-  index: number;
 
 
 
@@ -868,7 +870,6 @@ interface SelectedStyleItem {
 
 
 
-  name: string;
 
 
 
@@ -876,7 +877,6 @@ interface SelectedStyleItem {
 
 
 
-  nameEn?: string;
 
 
 
@@ -884,151 +884,8 @@ interface SelectedStyleItem {
 
 
 
-  description?: string;
 
 
-
-
-
-
-
-  visualDescription?: string;
-
-
-
-
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-interface SelectedLayoutItem {
-
-
-
-
-
-
-
-  index: number;
-
-
-
-
-
-
-
-  name: string;
-
-
-
-
-
-
-
-  nameEn?: string;
-
-
-
-
-
-
-
-  description?: string;
-
-
-
-
-
-
-
-  layoutNotes?: string;
-
-
-
-
-
-
-
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-interface AgentFormData {
-
-
-
-
-
-
-
-  copy: string;
-
-
-
-
-
-
-
-  selectedStyle: SelectedStyleItem | null;
-
-
-
-
-
-
-
-  selectedLayout: SelectedLayoutItem | null;
-
-
-
-
-
-
-
-  aspect_ratio: string;
-
-
-
-
-
-
-
-  resolution: string;
-
-
-
-
-
-
-
-}
 
 
 
@@ -1045,69 +902,13 @@ interface AgentFormData {
 
 
 interface Stage1Snapshot {
-
-
-
-
-
-
-
   copy: string;
-
-
-
-
-
-
-
-  selectedStyle: SelectedStyleItem | null;
-
-
-
-
-
-
-
-  selectedLayout: SelectedLayoutItem | null;
-
-
-
-
-
-
-
+  selectedStyle: StyleRecommendation | null;
+  selectedLayout: LayoutRecommendation | null;
   aspect_ratio: string;
-
-
-
-
-
-
-
   resolution: string;
-
-
-
-
-
-
-
-  styleRecommendations: any[];
-
-
-
-
-
-
-
-  layoutRecommendations: any[];
-
-
-
-
-
-
-
+  styleRecommendations: StyleRecommendation[];
+  layoutRecommendations: LayoutRecommendation[];
 }
 
 
@@ -2454,55 +2255,19 @@ export function AgentWorkspace() {
 
 
 
-  const [formData, setFormData] = useState<AgentFormData>({
-
-
-
-
-
-
-
-    copy: "",
-
-
-
-
-
-
-
-    selectedStyle: null,
-
-
-
-
-
-
-
-    selectedLayout: null,
-
-
-
-
-
-
-
-    aspect_ratio: "1:1",
-
-
-
-
-
-
-
-    resolution: "1k",
-
-
-
-
-
-
-
-  });
+  // ── DesignStore 订阅（单源真理） ──
+  const ds_copy_raw = useDesignStore((s) => s.copy_raw);
+  const ds_active_style = useDesignStore((s) => s.active_style);
+  const ds_active_layout = useDesignStore((s) => s.active_layout);
+  const ds_active_ratio = useDesignStore((s) => s.active_ratio);
+  const ds_active_resolution = useDesignStore((s) => s.active_resolution);
+  const ds_setCopyRaw = useDesignStore((s) => s.setCopyRaw);
+  const ds_setActiveStyle = useDesignStore((s) => s.setActiveStyle);
+  const ds_setActiveLayout = useDesignStore((s) => s.setActiveLayout);
+  const ds_setActiveRatio = useDesignStore((s) => s.setActiveRatio);
+  const ds_setActiveResolution = useDesignStore((s) => s.setActiveResolution);
+  const ds_clearActiveStyle = useDesignStore((s) => s.clearActiveStyle);
+  const ds_clearActiveLayout = useDesignStore((s) => s.clearActiveLayout);
 
 
 
@@ -2566,7 +2331,7 @@ export function AgentWorkspace() {
 
 
 
-  // 用户手动新增的文案栏（尚未合并入 formData.copy 的 pending 状态）
+  // 用户手动新增的文案栏（尚未合并入 ds_copy_raw 的 pending 状态）
 
 
 
@@ -2718,7 +2483,7 @@ export function AgentWorkspace() {
 
 
 
-      setFormData((prev) => ({ ...prev, copy: verbatim }));
+      ds_setCopyRaw(verbatim);
 
 
 
@@ -3025,7 +2790,7 @@ export function AgentWorkspace() {
 
 
 
-  // Sync formData from session, avoiding overwriting while user is editing copy
+  // Sync DesignStore from session, avoiding overwriting while user is editing copy
 
 
 
@@ -3073,71 +2838,13 @@ export function AgentWorkspace() {
 
 
 
-      setFormData((prev) => {
-
-
-
-
-
-
-
-        return {
-
-
-
-
-
-
-
-          copy: isCopyEditing ? prev.copy : (session.stream_a?.copy ?? ""),
-
-
-
-
-
-
-
-          selectedStyle: prev.selectedStyle,
-
-
-
-
-
-
-
-          selectedLayout: prev.selectedLayout,
-
-
-
-
-
-
-
-          aspect_ratio: session.aspect_ratio ?? "1:1",
-
-
-
-
-
-
-
-          resolution: session.resolution ?? "1k",
-
-
-
-
-
-
-
-        };
-
-
-
-
-
-
-
-      });
+      if (!isCopyEditing) {
+          useDesignStore.setState({ copy_raw: session.stream_a?.copy ?? "" });
+        }
+        useDesignStore.setState({
+          active_ratio: session.aspect_ratio ?? "1:1",
+          active_resolution: session.resolution ?? "1k",
+        });
 
 
 
@@ -3193,54 +2900,15 @@ export function AgentWorkspace() {
 
 
 
-      setFormData({
-
-
-
-
-
-
-
-        copy: session.stream_a?.copy ?? "",
-
-
-
-
-
-
-
-        selectedStyle: null,
-
-
-
-
-
-
-
-        selectedLayout: null,
-
-
-
-
-
-
-
-        aspect_ratio: session.aspect_ratio ?? "1:1",
-
-
-
-
-
-
-
-        resolution: session.resolution ?? "1k",
-
-
-
-
-
-
-
+      useDesignStore.setState({
+        copy_raw: session.stream_a?.copy ?? "",
+        active_style: null,
+        active_layout: null,
+        active_ratio: session.aspect_ratio ?? "1:1",
+        active_resolution: session.resolution ?? "1k",
+        dirty_copy: false,
+        dirty_style_selection: false,
+        dirty_layout_selection: false,
       });
 
 
@@ -4480,54 +4148,15 @@ export function AgentWorkspace() {
 
 
 
-      setFormData({
-
-
-
-
-
-
-
-        copy: "",
-
-
-
-
-
-
-
-        selectedStyle: null,
-
-
-
-
-
-
-
-        selectedLayout: null,
-
-
-
-
-
-
-
-        aspect_ratio: "1:1",
-
-
-
-
-
-
-
-        resolution: "1k",
-
-
-
-
-
-
-
+      useDesignStore.setState({
+        copy_raw: "",
+        active_style: null,
+        active_layout: null,
+        active_ratio: "1:1",
+        active_resolution: "1k",
+        dirty_copy: false,
+        dirty_style_selection: false,
+        dirty_layout_selection: false,
       });
 
 
@@ -4576,55 +4205,16 @@ export function AgentWorkspace() {
 
 
 
-    setFormData({
-
-
-
-
-
-
-
-      copy: "",
-
-
-
-
-
-
-
-      selectedStyle: null,
-
-
-
-
-
-
-
-      selectedLayout: null,
-
-
-
-
-
-
-
-      aspect_ratio: "1:1",
-
-
-
-
-
-
-
-      resolution: "1k",
-
-
-
-
-
-
-
-    });
+    useDesignStore.setState({
+        copy_raw: "",
+        active_style: null,
+        active_layout: null,
+        active_ratio: "1:1",
+        active_resolution: "1k",
+        dirty_copy: false,
+        dirty_style_selection: false,
+        dirty_layout_selection: false,
+      });
 
 
 
@@ -5136,7 +4726,7 @@ export function AgentWorkspace() {
 
 
 
-    // 1. 立即注入 formData.copy（不等 AI 回复）
+    // 1. 立即注入 ds_copy_raw（不等 AI 回复）
 
 
 
@@ -5176,7 +4766,7 @@ export function AgentWorkspace() {
 
 
 
-        setFormData((prev) => ({ ...prev, copy: verbatimCopy }));
+        ds_setCopyRaw(verbatimCopy);
 
 
 
@@ -5572,8 +5162,8 @@ export function AgentWorkspace() {
       }
     }
     if (!isFullPrompt(val)) return val;
-    if (formData.selectedStyle?.name) {
-      return formData.selectedStyle.name;
+    if (ds_active_style?.name) {
+      return ds_active_style.name;
     }
     return "";
   };
@@ -6394,7 +5984,7 @@ export function AgentWorkspace() {
 
 
       const isNoStyle = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无明确指定视觉风格"].some(kw => friendlyVal.trim().toLowerCase().includes(kw)) || !friendlyVal;
-      const isCurrentActive = !formData.selectedStyle;
+      const isCurrentActive = !ds_active_style;
       const styleVal = !isCurrentActive ? "" : (isNoStyle ? "" : friendlyVal);
 
 
@@ -6435,7 +6025,7 @@ export function AgentWorkspace() {
 
 
 
-  }, [session?.stream_b?.visual_description, session?.clarify_messages, session?.stream_b?.style_reference_image, formData.selectedStyle]);
+  }, [session?.stream_b?.visual_description, session?.clarify_messages, session?.stream_b?.style_reference_image, ds_active_style]);
 
 
 
@@ -6493,7 +6083,7 @@ export function AgentWorkspace() {
 
 
       const isNoLayout = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无具体排版要求"].some(kw => rawLayoutVal.toLowerCase().includes(kw)) || !rawLayoutVal;
-      const isCurrentLayoutActive = !formData.selectedLayout;
+      const isCurrentLayoutActive = !ds_active_layout;
                                  const layoutVal = !isCurrentLayoutActive ? "" : (isNoLayout ? "" : rawLayoutVal);
 
 
@@ -6534,7 +6124,7 @@ export function AgentWorkspace() {
 
 
 
-  }, [session?.stream_a?.layout_notes, session?.clarify_messages, session?.stream_b?.layout_reference_image, formData.selectedLayout]);
+  }, [session?.stream_a?.layout_notes, session?.clarify_messages, session?.stream_b?.layout_reference_image, ds_active_layout]);
 
 
 
@@ -7094,7 +6684,7 @@ export function AgentWorkspace() {
 
 
 
-    const currentRatio = formData?.aspect_ratio || session?.aspect_ratio || "1:1";
+    const currentRatio = ds_active_ratio || session?.aspect_ratio || "1:1";
 
 
 
@@ -7638,7 +7228,7 @@ export function AgentWorkspace() {
 
 
 
-    let selectedLayout = formData.selectedLayout;
+    let selectedLayout = ds_active_layout;
 
 
 
@@ -7694,7 +7284,7 @@ export function AgentWorkspace() {
 
 
 
-      copy: formData.copy,
+      copy: ds_copy_raw,
 
 
 
@@ -7702,7 +7292,7 @@ export function AgentWorkspace() {
 
 
 
-      selectedStyle: formData.selectedStyle,
+      selectedStyle: ds_active_style,
 
 
 
@@ -7718,7 +7308,7 @@ export function AgentWorkspace() {
 
 
 
-      aspect_ratio: formData.aspect_ratio,
+      aspect_ratio: ds_active_ratio,
 
 
 
@@ -7726,7 +7316,7 @@ export function AgentWorkspace() {
 
 
 
-      resolution: formData.resolution,
+      resolution: ds_active_resolution,
 
 
 
@@ -7790,7 +7380,7 @@ export function AgentWorkspace() {
 
 
 
-        copy: formData.copy,
+        copy: ds_copy_raw,
 
 
 
@@ -7838,7 +7428,7 @@ export function AgentWorkspace() {
 
 
 
-    if (formData.selectedStyle) {
+    if (ds_active_style) {
 
 
 
@@ -7846,7 +7436,7 @@ export function AgentWorkspace() {
 
 
 
-      updatePayload.stream_b.visual_description = formData.selectedStyle.visualDescription || formData.selectedStyle.description || "";
+      updatePayload.stream_b.visual_description = ds_active_style.visual_description || ds_active_style.description || "";
 
 
 
@@ -7926,39 +7516,8 @@ export function AgentWorkspace() {
 
 
 
-    setFormData((prev) => ({
-
-
-
-
-
-
-
-      ...prev,
-
-
-
-
-
-
-
-      selectedStyle: null,
-
-
-
-
-
-
-
-      selectedLayout: null,
-
-
-
-
-
-
-
-    }));
+    ds_clearActiveStyle();
+    ds_clearActiveLayout();
 
 
 
@@ -8008,7 +7567,7 @@ export function AgentWorkspace() {
 
 
 
-  const handleSelectStyle = (rec: SelectedStyleItem) => {
+  const handleSelectStyle = (rec: StyleRecommendation) => {
 
 
 
@@ -8016,55 +7575,11 @@ export function AgentWorkspace() {
 
 
 
-    setFormData((prev) => ({
-
-
-
-
-
-
-
-      ...prev,
-
-
-
-
-
-
-
-      selectedStyle:
-
-
-
-
-
-
-
-        prev.selectedStyle?.index === rec.index && prev.selectedStyle?.name === rec.name
-
-
-
-
-
-
-
-          ? null
-
-
-
-
-
-
-
-          : rec,
-
-
-
-
-
-
-
-    }));
+    if (ds_active_style?.index === rec.index && ds_active_style?.name === rec.name) {
+      ds_clearActiveStyle();
+    } else {
+      ds_setActiveStyle(rec);
+    }
 
 
 
@@ -8089,19 +7604,18 @@ export function AgentWorkspace() {
 
 
   const handleSelectTag = (tag: PresetStyleTag) => {
-    const isSelected = formData.selectedStyle?.name === tag.name;
+    const isSelected = ds_active_style?.name === tag.name;
     if (isSelected) {
-      setFormData((prev) => ({ ...prev, selectedStyle: null }));
+      ds_clearActiveStyle();
     } else {
-      const item: SelectedStyleItem = {
+      const item: StyleRecommendation = {
         index: 99,
         name: tag.name,
+        name_en: tag.name,
+        visual_description: tag.prompt,
         description: tag.prompt,
       };
-      setFormData((prev) => ({
-        ...prev,
-        selectedStyle: item,
-      }));
+      ds_setActiveStyle(item);
       if (styleTextareaRef.current) {
         styleTextareaRef.current.value = tag.prompt;
       }
@@ -8112,20 +7626,17 @@ export function AgentWorkspace() {
   };
 
   const handleSelectLayoutTag = (tag: PresetLayoutTag) => {
-    const isSelected = formData.selectedLayout?.name === `[标签] ${tag.name}` || formData.selectedLayout?.name === tag.name;
+    const isSelected = ds_active_layout?.name === `[标签] ${tag.name}` || ds_active_layout?.name === tag.name;
     if (isSelected) {
-      setFormData((prev) => ({ ...prev, selectedLayout: null }));
+      ds_clearActiveLayout();
     } else {
-      const item = {
+      const item: LayoutRecommendation = {
         index: -1,
         name: `[标签] ${tag.name}`,
         description: tag.prompt,
-        layoutNotes: tag.prompt,
+        layout_notes: tag.prompt,
       };
-      setFormData((prev) => ({
-        ...prev,
-        selectedLayout: item,
-      }));
+      ds_setActiveLayout(item);
       if (layoutTextareaRef.current) {
         layoutTextareaRef.current.value = tag.prompt;
       }
@@ -8149,7 +7660,7 @@ export function AgentWorkspace() {
 
 
 
-  const handleSelectLayout = (rec: SelectedLayoutItem) => {
+  const handleSelectLayout = (rec: LayoutRecommendation) => {
 
 
 
@@ -8157,55 +7668,11 @@ export function AgentWorkspace() {
 
 
 
-    setFormData((prev) => ({
-
-
-
-
-
-
-
-      ...prev,
-
-
-
-
-
-
-
-      selectedLayout:
-
-
-
-
-
-
-
-        prev.selectedLayout?.index === rec.index && prev.selectedLayout?.name === rec.name
-
-
-
-
-
-
-
-          ? null
-
-
-
-
-
-
-
-          : rec,
-
-
-
-
-
-
-
-    }));
+    if (ds_active_layout?.index === rec.index && ds_active_layout?.name === rec.name) {
+      ds_clearActiveLayout();
+    } else {
+      ds_setActiveLayout(rec);
+    }
 
 
 
@@ -8277,7 +7744,7 @@ export function AgentWorkspace() {
 
 
 
-      if (formData.selectedStyle) {
+      if (ds_active_style) {
 
 
 
@@ -8285,7 +7752,7 @@ export function AgentWorkspace() {
 
 
 
-        selectedStyleName = formData.selectedStyle.name;
+        selectedStyleName = ds_active_style.name;
 
 
 
@@ -8301,7 +7768,7 @@ export function AgentWorkspace() {
 
 
 
-        const found = recs.find((r) => r.index === formData.selectedStyle?.index);
+        const found = recs.find((r) => r.index === ds_active_style?.index);
 
 
 
@@ -8365,7 +7832,7 @@ export function AgentWorkspace() {
 
 
 
-        current_copy: formData.copy,
+        current_copy: ds_copy_raw,
 
 
 
@@ -8413,7 +7880,7 @@ export function AgentWorkspace() {
 
 
 
-      setFormData((prev) => ({ ...prev, copy: res.refreshed_copy }));
+      ds_setCopyRaw(res.refreshed_copy);
 
 
 
@@ -8701,7 +8168,7 @@ export function AgentWorkspace() {
 
 
 
-    const effectiveLines = getEffectiveLines(rawCopyLines, formData.copy);
+    const effectiveLines = getEffectiveLines(rawCopyLines, ds_copy_raw);
 
 
 
@@ -8909,7 +8376,7 @@ export function AgentWorkspace() {
 
 
 
-    setFormData((prev) => ({ ...prev, copy: newCopyStr }));
+    ds_setCopyRaw(newCopyStr);
 
 
 
@@ -12816,7 +12283,7 @@ export function AgentWorkspace() {
 
 
 
-                      const effectiveLines = getEffectiveLines(rawCopyLines, formData.copy);
+                      const effectiveLines = getEffectiveLines(rawCopyLines, ds_copy_raw);
 
 
 
@@ -12984,7 +12451,7 @@ export function AgentWorkspace() {
 
 
 
-                        setFormData((prev) => ({ ...prev, copy: allSegments.join(" | ") }));
+                        ds_setCopyRaw(allSegments.join(" | "));
 
 
 
@@ -13040,7 +12507,7 @@ export function AgentWorkspace() {
 
 
 
-                            copy: formData.copy,
+                            copy: ds_copy_raw,
 
 
 
@@ -13352,7 +12819,7 @@ export function AgentWorkspace() {
 
 
 
-                        setFormData((prev) => ({ ...prev, copy: newCopyStr }));
+                        ds_setCopyRaw(newCopyStr);
 
 
 
@@ -15400,7 +14867,7 @@ export function AgentWorkspace() {
 
 
 
-                                    const newCopy = formData.copy
+                                    const newCopy = ds_copy_raw
 
 
 
@@ -15408,7 +14875,7 @@ export function AgentWorkspace() {
 
 
 
-                                      ? formData.copy + " | " + val
+                                      ? ds_copy_raw + " | " + val
 
 
 
@@ -15424,7 +14891,7 @@ export function AgentWorkspace() {
 
 
 
-                                    setFormData((prev) => ({ ...prev, copy: newCopy }));
+                                    ds_setCopyRaw(newCopy);
 
 
 
@@ -16385,7 +15852,7 @@ export function AgentWorkspace() {
 
 
 
-                        const isCurrentActive = !formData.selectedStyle;
+                        const isCurrentActive = !ds_active_style;
 
 
 
@@ -16417,7 +15884,7 @@ export function AgentWorkspace() {
 
 
 
-                        if (formData.selectedStyle && formData.selectedStyle.index !== 0) {
+                        if (ds_active_style && ds_active_style.index !== 0) {
 
 
 
@@ -16433,7 +15900,7 @@ export function AgentWorkspace() {
 
 
 
-                            (r) => r.name === formData.selectedStyle?.name
+                            (r) => r.name === ds_active_style?.name
 
 
 
@@ -16465,7 +15932,7 @@ export function AgentWorkspace() {
 
 
 
-                              index: formData.selectedStyle.index,
+                              index: ds_active_style.index,
 
 
 
@@ -16473,7 +15940,7 @@ export function AgentWorkspace() {
 
 
 
-                              name: formData.selectedStyle.name,
+                              name: ds_active_style.name,
 
 
 
@@ -16481,7 +15948,7 @@ export function AgentWorkspace() {
 
 
 
-                              nameEn: formData.selectedStyle.nameEn || "Selected Style",
+                              nameEn: ds_active_style.name_en || "Selected Style",
 
 
 
@@ -16489,7 +15956,7 @@ export function AgentWorkspace() {
 
 
 
-                              description: formData.selectedStyle.description || "您之前选定的风格，刷新推荐后仍为您保留",
+                              description: ds_active_style.description || "您之前选定的风格，刷新推荐后仍为您保留",
 
 
 
@@ -16497,7 +15964,7 @@ export function AgentWorkspace() {
 
 
 
-                              visualDescription: formData.selectedStyle.visualDescription || "",
+                              visualDescription: ds_active_style.visual_description || "",
 
 
 
@@ -16641,7 +16108,7 @@ export function AgentWorkspace() {
 
 
 
-                                      setFormData((prev) => ({ ...prev, selectedStyle: null }));
+                                      ds_clearActiveStyle();
 
 
 
@@ -17410,7 +16877,7 @@ export function AgentWorkspace() {
 
 
 
-                                                setFormData((prev) => ({ ...prev, selectedStyle: null }));
+                                                ds_clearActiveStyle();
 
 
 
@@ -18298,7 +17765,7 @@ export function AgentWorkspace() {
 
 
 
-                                      const isSelected = formData.selectedStyle
+                                      const isSelected = ds_active_style
 
 
 
@@ -18306,7 +17773,7 @@ export function AgentWorkspace() {
 
 
 
-                                        ? (formData.selectedStyle.index === rec.index && formData.selectedStyle.name === rec.name)
+                                        ? (ds_active_style.index === rec.index && ds_active_style.name === rec.name)
 
 
 
@@ -18650,7 +18117,7 @@ export function AgentWorkspace() {
 
 
 
-                                      selectedTagId={formData.selectedStyle?.index === 99 ? (formData.selectedStyle?.name || null) : null}
+                                      selectedTagId={ds_active_style?.index === 99 ? (ds_active_style?.name || null) : null}
 
 
 
@@ -18835,7 +18302,7 @@ export function AgentWorkspace() {
 
 
 
-                    const isCurrentActive = !formData.selectedLayout;
+                    const isCurrentActive = !ds_active_layout;
 
 
 
@@ -18859,7 +18326,7 @@ export function AgentWorkspace() {
 
 
 
-                    if (formData.selectedLayout && formData.selectedLayout.index !== 0) {
+                    if (ds_active_layout && ds_active_layout.index !== 0) {
 
 
 
@@ -18875,7 +18342,7 @@ export function AgentWorkspace() {
 
 
 
-                        (r) => r.name === formData.selectedLayout?.name
+                        (r) => r.name === ds_active_layout?.name
 
 
 
@@ -18907,7 +18374,7 @@ export function AgentWorkspace() {
 
 
 
-                          index: formData.selectedLayout.index,
+                          index: ds_active_layout.index,
 
 
 
@@ -18915,7 +18382,7 @@ export function AgentWorkspace() {
 
 
 
-                          name: formData.selectedLayout.name,
+                          name: ds_active_layout.name,
 
 
 
@@ -18923,7 +18390,7 @@ export function AgentWorkspace() {
 
 
 
-                          nameEn: formData.selectedLayout.nameEn || "Selected Layout",
+                          nameEn: ds_active_layout.name_en || "Selected Layout",
 
 
 
@@ -18931,7 +18398,7 @@ export function AgentWorkspace() {
 
 
 
-                          description: formData.selectedLayout.description || "您之前选定的排版，刷新推荐后仍为您保留",
+                          description: ds_active_layout.description || "您之前选定的排版，刷新推荐后仍为您保留",
 
 
 
@@ -18939,7 +18406,7 @@ export function AgentWorkspace() {
 
 
 
-                          layoutNotes: formData.selectedLayout.layoutNotes || "",
+                          layoutNotes: ds_active_layout.layout_notes || "",
 
 
 
@@ -19075,7 +18542,7 @@ export function AgentWorkspace() {
 
 
 
-                                  setFormData((prev) => ({ ...prev, selectedLayout: null }));
+                                  ds_clearActiveLayout();
 
 
 
@@ -19316,7 +18783,7 @@ export function AgentWorkspace() {
 
 
                                  const isNoLayout = origIsNoLayout;
-                                 const isCurrentLayoutActive = !formData.selectedLayout;
+                                 const isCurrentLayoutActive = !ds_active_layout;
                                  const layoutVal = !isCurrentLayoutActive ? "" : (isNoLayout ? "" : rawLayoutVal);
 
 
@@ -19933,7 +19400,7 @@ export function AgentWorkspace() {
 
 
 
-                                          setFormData((prev) => ({ ...prev, selectedLayout: null }));
+                                          ds_clearActiveLayout();
 
 
 
@@ -20805,7 +20272,7 @@ export function AgentWorkspace() {
 
 
 
-                                const isSelected = formData.selectedLayout
+                                const isSelected = ds_active_layout
 
 
 
@@ -20813,7 +20280,7 @@ export function AgentWorkspace() {
 
 
 
-                                  ? (formData.selectedLayout.index === rec.index && formData.selectedLayout.name === rec.name)
+                                  ? (ds_active_layout.index === rec.index && ds_active_layout.name === rec.name)
 
 
 
@@ -21137,7 +20604,7 @@ export function AgentWorkspace() {
                             )}
                             <LayoutTagPopover
                               onSelectTag={handleSelectLayoutTag}
-                              selectedTagId={formData.selectedLayout?.index === -1 ? (formData.selectedLayout?.name?.replace(/^\[标签\]\s*/, "") || null) : null}
+                              selectedTagId={ds_active_layout?.index === -1 ? (ds_active_layout?.name?.replace(/^\[标签\]\s*/, "") || null) : null}
                               disabled={isRefreshingLayouts}
                             />
 
@@ -21275,7 +20742,7 @@ export function AgentWorkspace() {
 
 
 
-                            const isActive = formData.aspect_ratio === r;
+                            const isActive = ds_active_ratio === r;
 
 
 
@@ -21395,39 +20862,7 @@ export function AgentWorkspace() {
 
 
 
-                                  setFormData((prev) => ({
-
-
-
-
-
-
-
-                                    ...prev,
-
-
-
-
-
-
-
-                                    aspect_ratio: r,
-
-
-
-
-
-
-
-                                    selectedLayout: prev.selectedLayout,
-
-
-
-
-
-
-
-                                  }));
+                                  ds_setActiveRatio(r);
 
 
 
@@ -21643,7 +21078,7 @@ export function AgentWorkspace() {
 
 
 
-                            const isActive = formData.resolution === res;
+                            const isActive = ds_active_resolution === res;
 
 
 
@@ -21683,31 +21118,7 @@ export function AgentWorkspace() {
 
 
 
-                                  setFormData((prev) => ({
-
-
-
-
-
-
-
-                                    ...prev,
-
-
-
-
-
-
-
-                                    resolution: res,
-
-
-
-
-
-
-
-                                  }));
+                                  ds_setActiveResolution(res);
 
 
 
@@ -22821,54 +22232,15 @@ export function AgentWorkspace() {
 
 
 
-                                  setFormData({
-
-
-
-
-
-
-
-                                    copy: stage1Snapshot.copy,
-
-
-
-
-
-
-
-                                    selectedStyle: stage1Snapshot.selectedStyle,
-
-
-
-
-
-
-
-                                    selectedLayout: stage1Snapshot.selectedLayout,
-
-
-
-
-
-
-
-                                    aspect_ratio: session?.aspect_ratio ?? stage1Snapshot.aspect_ratio,
-
-
-
-
-
-
-
-                                    resolution: session?.resolution ?? stage1Snapshot.resolution,
-
-
-
-
-
-
-
+                                  useDesignStore.setState({
+                                    copy_raw: stage1Snapshot.copy,
+                                    active_style: stage1Snapshot.selectedStyle,
+                                    active_layout: stage1Snapshot.selectedLayout,
+                                    active_ratio: session?.aspect_ratio ?? stage1Snapshot.aspect_ratio,
+                                    active_resolution: session?.resolution ?? stage1Snapshot.resolution,
+                                    dirty_copy: false,
+                                    dirty_style_selection: false,
+                                    dirty_layout_selection: false,
                                   });
 
 
