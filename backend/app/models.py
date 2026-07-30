@@ -131,6 +131,11 @@ class AgentSession(Base):
     # 错误信息（failed 状态时）
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
+    # 新增：prompting 阶段从 stream_a/stream_b 聚合的结构化设计数据
+    # 格式: {copy, visual, layout, recommendations, missing_fields}
+    # clarifying 阶段为 null；老会话为 null（前端兜底读 stream_a/stream_b）
+    design_json: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_now, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), default=_now, onupdate=_now, nullable=False

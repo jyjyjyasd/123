@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import type { ExtendedImage, AgentSession } from "../types";
 
@@ -13,110 +13,150 @@ const ALL_RATIOS = [
   { key: "9:32", label: "详情页 9:32" },
 ];
 
-interface ExtendModalProps {
-  currentRatio: string;
-  onExtend: (ratios: string[], resolution: "2k" | "4k") => void;
-  onClose: () => void;
-  isLoading?: boolean;
+export interface ExtendModalHandle {
+  open(url?: string, ratio?: string): void;
+  close(): void;
+}
+
+export interface ExtendModalProps {
+  currentRatio?: string;
+  onExtend: (ratios: string[], resolution: "2k" | "4k", baseImageUrl?: string) => void;
+  onClose?: () => void;
   tasks?: ExtendedImage[];
   session: AgentSession;
   baseImageUrl?: string;
 }
 
-export function ExtendModal({
-  currentRatio,
-  onExtend,
-  onClose,
-  isLoading = false,
-  tasks = [],
-  session,
-  baseImageUrl,
-}: ExtendModalProps) {
-  const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [resolution, setResolution] = useState<"2k" | "4k">("2k");
+export const ExtendModal = forwardRef<ExtendModalHandle, ExtendModalProps>(
+  (
+    {
+      currentRatio: propCurrentRatio,
+      onExtend,
+      onClose,
+      tasks = [],
+      session,
+      baseImageUrl: propBaseImageUrl,
+    },
+    ref
+  ) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [internalBaseImageUrl, setInternalBaseImageUrl] = useState<string | undefined>();
+    const [internalBaseRatio, setInternalBaseRatio] = useState<string | undefined>();
 
-  const toggleRatio = (ratio: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(ratio)) {
-        next.delete(ratio);
-      } else {
-        next.add(ratio);
-      }
-      return next;
-    });
-  };
+    useImperativeHandle(ref, () => ({
+      open(url?: string, ratio?: string) {
+        setInternalBaseImageUrl(url);
+        setInternalBaseRatio(ratio);
+        setIsOpen(true);
+      },
+      close() {
+        setIsOpen(false);
+      },
+    }));
 
-  const handleExtend = () => {
-    if (selected.size === 0 || isLoading) return;
-    onExtend(Array.from(selected), resolution);
-  };
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [resolution, setResolution] = useState<"2k" | "4k">("2k");
+    const [isLoading, setIsLoading] = useState(false);
 
-  const isUrlMatch = (url1?: string, url2?: string) => {
-    if (!url1 || !url2) return false;
-    const cleanUrl = (u: string) => {
-      const parts = u.split('?')[0].split('/');
-      return parts[parts.length - 1];
+    const baseImageUrl = internalBaseImageUrl ?? propBaseImageUrl;
+    const currentRatio = internalBaseRatio || propCurrentRatio || session.aspect_ratio || "1:1";
+
+    if (!isOpen) return null;
+
+    const handleClose = () => {
+      setIsOpen(false);
+      onClose?.();
     };
-    return cleanUrl(url1) === cleanUrl(url2);
-  };
 
-  const generatedRatiosInGroup = new Set<string>();
-  const activeExtList = session.extended_images || [];
-  let isTargetGroupFound = false;
-
-  // 1. 优先检索历史归档版本组
-  if (session.archived_images && baseImageUrl) {
-    for (const group of session.archived_images) {
-      const isPrimMatch = group.primary_image?.url && isUrlMatch(group.primary_image.url, baseImageUrl);
-      const isExtMatch = group.extended_images?.some((ext) => ext.url && isUrlMatch(ext.url, baseImageUrl));
-      if (isPrimMatch || isExtMatch) {
-        isTargetGroupFound = true;
-        if (group.primary_image?.url) {
-          generatedRatiosInGroup.add(group.primary_image.ratio);
+    const toggleRatio = (ratio: string) => {
+      setSelected((prev) => {
+        const next = new Set(prev);
+        if (next.has(ratio)) {
+          next.delete(ratio);
+        } else {
+          next.add(ratio);
         }
-        group.extended_images?.forEach((ext) => {
-          if (ext.url && ext.status === "completed") {
-            generatedRatiosInGroup.add(ext.ratio);
+        return next;
+      });
+    };
+
+    const handleExtend = async () => {
+      if (selected.size === 0 || isLoading) return;
+      setIsLoading(true);
+      try {
+        await onExtend(Array.from(selected), resolution, baseImageUrl);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+
+    const isUrlMatch = (url1?: string, url2?: string) => {
+      if (!url1 || !url2) return false;
+      const cleanUrl = (u: string) => {
+        const parts = u.split('?')[0].split('/');
+        return parts[parts.length - 1];
+      };
+      return cleanUrl(url1) === cleanUrl(url2);
+    };
+
+    const generatedRatiosInGroup = new Set<string>();
+    const activeExtList = session.extended_images || [];
+    let isTargetGroupFound = false;
+
+    // 1. 优先检索历史归档版本组
+    if (session.archived_images && baseImageUrl) {
+      for (const group of session.archived_images) {
+        const isPrimMatch = group.primary_image?.url && isUrlMatch(group.primary_image.url, baseImageUrl);
+        const isExtMatch = group.extended_images?.some((ext) => ext.url && isUrlMatch(ext.url, baseImageUrl));
+        if (isPrimMatch || isExtMatch) {
+          isTargetGroupFound = true;
+          if (group.primary_image?.url) {
+            generatedRatiosInGroup.add(group.primary_image.ratio);
           }
-        });
-        break;
+          group.extended_images?.forEach((ext) => {
+            if (ext.url && ext.status === "completed") {
+              generatedRatiosInGroup.add(ext.ratio);
+            }
+          });
+          break;
+        }
       }
     }
-  }
 
-  // 2. 如果在历史归档中没有匹配到，或者没有 baseImageUrl，则归属到当前活跃版本组
-  if (!isTargetGroupFound) {
-    isTargetGroupFound = true;
-    if (session.generation_id) {
-      generatedRatiosInGroup.add(session.primary_ratio || session.aspect_ratio || "1:1");
-    }
-    activeExtList.forEach((ext) => {
-      if (ext.url && ext.status === "completed") {
-        generatedRatiosInGroup.add(ext.ratio);
+    // 2. 如果在历史归档中没有匹配到，或者没有 baseImageUrl，则归属到当前活跃版本组
+    if (!isTargetGroupFound) {
+      isTargetGroupFound = true;
+      if (session.generation_id) {
+        generatedRatiosInGroup.add(session.primary_ratio || session.aspect_ratio || "1:1");
       }
-    });
-  }
+      activeExtList.forEach((ext) => {
+        if (ext.url && ext.status === "completed") {
+          generatedRatiosInGroup.add(ext.ratio);
+        }
+      });
+    }
 
-  // Filter out the current ratio from options
-  const list = ALL_RATIOS.filter((r) => r.key !== currentRatio);
-  const activeTasks = tasks.filter((task) => task.status && task.status !== "completed");
-  const runningTasks = tasks.filter((task) => task.status && task.status !== "completed" && task.status !== "failed");
+    // Filter out the current ratio from options
+    const list = ALL_RATIOS.filter((r) => r.key !== currentRatio);
+    const activeTasks = tasks.filter((task) => task.status && task.status !== "completed");
+    const runningTasks = tasks.filter((task) => task.status && task.status !== "completed" && task.status !== "failed");
 
-  return (
-    <div
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.4)",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        zIndex: 1000,
-        animation: "fadeIn 0.15s ease",
-      }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-    >
+    return (
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(0,0,0,0.4)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          zIndex: 1000,
+          animation: "fadeIn 0.15s ease",
+        }}
+        onClick={(e) => e.target === e.currentTarget && handleClose()}
+      >
+
       <div
         style={{
           background: "#fff",
@@ -270,7 +310,7 @@ export function ExtendModal({
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               padding: "8px 16px",
               background: "transparent",
@@ -315,3 +355,5 @@ export function ExtendModal({
     </div>
   );
 }
+);
+

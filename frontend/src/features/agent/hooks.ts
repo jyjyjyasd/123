@@ -19,6 +19,7 @@ import {
 import type { AgentSession, SseFrame } from "./types";
 import { prepareReferenceFiles } from "@/lib/reference-files";
 import { fetchGeneration } from "@/features/generation/api";
+import { useDesignStore } from "./design-store";
 
 // ─── 会话状态 hook ──────────────────────────────────────────────────────────
 
@@ -209,6 +210,9 @@ export function useAgentSession(): UseAgentSessionReturn {
         return;
       }
       if (isStreaming) return;
+
+      // 新消息发送 → 重置脏标记（新轮次对话开始，旧编辑语境失效）
+      useDesignStore.getState().resetAllDirty();
 
       setError(null);
       setIsStreaming(true);

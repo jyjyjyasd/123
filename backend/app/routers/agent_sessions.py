@@ -160,6 +160,7 @@ def _to_out(s: AgentSession) -> AgentSessionOut:
         extended_images=_extended(s.extended_images),
         archived_images=_archived(s.archived_images),
         error_message=s.error_message,
+        design_json=load_json(s.design_json) if s.design_json else None,
         created_at=s.created_at,
         updated_at=s.updated_at,
     )

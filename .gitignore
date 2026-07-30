@@ -51,3 +51,12 @@ backend/.env
 
 # Cloned plugins
 cowart/
+
+# WorkBuddy project data
+.workbuddy/
+
+# pnpm store (generated)
+.pnpm-store/
+
+# Temp / generated files
+AgentWorkspace_compact.txt

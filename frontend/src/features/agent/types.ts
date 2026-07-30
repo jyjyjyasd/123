@@ -22,7 +22,7 @@ export interface StreamA {
   copy: string;
   layout_notes: string;
   layout_prompt: string;
-  layout_recommendations?: StyleRecommendation[] | null;
+  layout_recommendations?: LayoutRecommendation[] | null;
   pdf_document_url?: string | null;
   pdf_document_text?: string | null;
   pdf_document_name?: string | null;
@@ -49,12 +49,15 @@ export interface StyleRecommendation {
   name: string;
   name_en: string;
   visual_description: string;
+  description?: string;
 }
 
 export interface LayoutRecommendation {
   index: number;
   name: string;
   description: string;
+  name_en?: string;
+  layout_notes?: string;
 }
 
 export interface ExtendedImage {
@@ -97,8 +100,39 @@ export interface AgentSession {
   extended_images: ExtendedImage[];
   archived_images?: VersionGroup[];
   error_message?: string | null;
+  design_json?: DesignJson | null;
   created_at: string;
   updated_at: string;
+}
+
+// design_json 结构：后端在 prompting 阶段从 stream_a/stream_b 聚合生成
+export interface CopySegment {
+  text: string;
+  role: "headline" | "date" | "location" | "body" | "cta" | "other";
+  level: number;
+}
+
+export interface DesignJsonVisual {
+  description_en: string;
+  palette: string[];
+  mood: string[];
+}
+
+export interface DesignJsonLayout {
+  description: string;
+  structure: Array<{ segment: string; position: string; style: string; level: number }>;
+  global_notes: string;
+}
+
+export interface DesignJson {
+  copy: { raw: string; segments: CopySegment[] };
+  visual: DesignJsonVisual;
+  layout: DesignJsonLayout;
+  recommendations: {
+    styles: StyleRecommendation[];
+    layouts: LayoutRecommendation[];
+  };
+  missing_fields: string[];
 }
 
 // SSE 帧格式（来自 /clarify 端点）

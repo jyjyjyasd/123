@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { forwardRef, useImperativeHandle, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import type { AgentSession, ExtendedImage } from "../types";
 
@@ -13,25 +13,57 @@ const RATIO_NAMES: Record<string, string> = {
   "9:32": "详情页 9:32",
 };
 
-interface ResolutionExtendModalProps {
+export interface ResolutionExtendModalHandle {
+  open(url?: string, ratio?: string): void;
+  close(): void;
+}
+
+export interface ResolutionExtendModalProps {
   session: AgentSession;
-  onExtend: (ratios: string[], resolution: string) => void;
-  onClose: () => void;
-  isLoading?: boolean;
+  onExtend: (ratios: string[], resolution: string, baseImageUrl?: string) => void;
+  onClose?: () => void;
   tasks?: ExtendedImage[];
   currentRatio?: string;
   baseImageUrl?: string;
 }
 
-export function ResolutionExtendModal({
-  session,
-  onExtend,
-  onClose,
-  isLoading = false,
-  tasks = [],
-  currentRatio,
-  baseImageUrl,
-}: ResolutionExtendModalProps) {
+export const ResolutionExtendModal = forwardRef<ResolutionExtendModalHandle, ResolutionExtendModalProps>(
+  (
+    {
+      session,
+      onExtend,
+      onClose,
+      tasks = [],
+      currentRatio: propCurrentRatio,
+      baseImageUrl: propBaseImageUrl,
+    },
+    ref
+  ) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [internalBaseImageUrl, setInternalBaseImageUrl] = useState<string | undefined>();
+    const [internalBaseRatio, setInternalBaseRatio] = useState<string | undefined>();
+
+    useImperativeHandle(ref, () => ({
+      open(url?: string, ratio?: string) {
+        setInternalBaseImageUrl(url);
+        setInternalBaseRatio(ratio);
+        setIsOpen(true);
+      },
+      close() {
+        setIsOpen(false);
+      },
+    }));
+
+    const baseImageUrl = internalBaseImageUrl ?? propBaseImageUrl;
+    const currentRatio = internalBaseRatio ?? propCurrentRatio;
+
+    if (!isOpen) return null;
+
+    const handleClose = () => {
+      setIsOpen(false);
+      onClose?.();
+    };
+
   // 收集可升级为 4K 的比例列表
   const list: string[] = [];
   const primaryRatio = session.primary_ratio || session.aspect_ratio || "1:1";
@@ -132,6 +164,7 @@ export function ResolutionExtendModal({
   const [selected, setSelected] = useState<Set<string>>(new Set(defaultSelected));
   const activeTasks = tasks.filter((task) => task.status && task.status !== "completed");
   const runningTasks = tasks.filter((task) => task.status && task.status !== "completed" && task.status !== "failed");
+  const [isLoading, setIsLoading] = useState(false);
 
   const toggleRatio = (ratio: string) => {
     setSelected((prev) => {
@@ -145,10 +178,16 @@ export function ResolutionExtendModal({
     });
   };
 
-  const handleUpgrade = () => {
+  const handleUpgrade = async () => {
     if (selected.size === 0 || isLoading) return;
-    onExtend(Array.from(selected), "4k");
+    setIsLoading(true);
+    try {
+      await onExtend(Array.from(selected), "4k", baseImageUrl);
+    } finally {
+      setIsLoading(false);
+    }
   };
+
 
   return (
     <div
@@ -162,7 +201,7 @@ export function ResolutionExtendModal({
         zIndex: 1000,
         animation: "fadeIn 0.15s ease",
       }}
-      onClick={(e) => e.target === e.currentTarget && onClose()}
+      onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
       <div
         style={{
@@ -298,7 +337,7 @@ export function ResolutionExtendModal({
 
         <div style={{ display: "flex", gap: 10, justifyContent: "flex-end" }}>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             style={{
               padding: "8px 16px",
               background: "transparent",
@@ -343,3 +382,5 @@ export function ResolutionExtendModal({
     </div>
   );
 }
+);
+

@@ -224,6 +224,7 @@ def session_to_dict(s: AgentSession) -> dict:
         "extended_images": _load_json(s.extended_images, []),
         "archived_images": _load_json(s.archived_images, []),
         "error_message": s.error_message,
+        "design_json": _load_json(s.design_json),
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
     }
@@ -872,6 +873,40 @@ async def stream_clarify(
     s.status = new_status
     s.clarify_messages = _dump_json(messages)
     s.updated_at = datetime.now(timezone.utc)
+
+    # 聚合写入 design_json（仅在 prompting 阶段，clarifying 阶段跳过）
+    if new_status == "prompting":
+        sa_cur = _load_json(s.stream_a, {})
+        sb_cur = _load_json(s.stream_b, {})
+        copy_raw = sa_cur.get("copy", "")
+        # 按 | 拆分 copy 生成 segments
+        segments = []
+        for i, seg in enumerate([p.strip() for p in copy_raw.split("|") if p.strip()]):
+            segments.append({
+                "text": seg,
+                "role": "headline" if i == 0 else "other",
+                "level": 1 if i == 0 else 2,
+            })
+        design_json_data = {
+            "copy": {"raw": copy_raw, "segments": segments},
+            "visual": {
+                "description_en": sb_cur.get("visual_description", ""),
+                "palette": [],
+                "mood": [],
+            },
+            "layout": {
+                "description": sa_cur.get("layout_notes", ""),
+                "structure": [],
+                "global_notes": "",
+            },
+            "recommendations": {
+                "styles": sb_cur.get("style_recommendations") or [],
+                "layouts": sa_cur.get("layout_recommendations") or [],
+            },
+            "missing_fields": [],
+        }
+        s.design_json = _dump_json(design_json_data)
+
     await db.commit()
 
     logger.info(

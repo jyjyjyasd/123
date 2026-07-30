@@ -503,6 +503,7 @@ dependencies = [
     { name = "python-multipart" },
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "tencentcloud-sdk-python" },
+    { name = "tencentcloud-sdk-python-common" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -525,6 +526,7 @@ requires-dist = [
     { name = "python-multipart", specifier = ">=0.0.26" },
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.49" },
     { name = "tencentcloud-sdk-python", specifier = ">=3.1.141" },
+    { name = "tencentcloud-sdk-python-common", specifier = ">=3.1.145" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.46.0" },
 ]
 
@@ -868,6 +870,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9a/96/f16b7ca93e5c6a677122a8e039f3999313f5aa863c4244cbea9ec7d3e56f/tencentcloud_sdk_python-3.1.141.tar.gz", hash = "sha256:bd4439116d0f7bce823136451534da3e7f53eef680f0bcb920ed9c9229a150f9", size = 15858821, upload-time = "2026-07-26T20:08:42.589Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b7/76/1d3bd27c30e5b0afafa08633f8284733c086dc9bd37782ef3c42c31c3b29/tencentcloud_sdk_python-3.1.141-py2.py3-none-any.whl", hash = "sha256:57fd3b4f27876c325c730f8118bcdfb1ba67f0bfe54b9bb4211ea5007e1c0ccc", size = 16772341, upload-time = "2026-07-26T20:08:29.388Z" },
+]
+
+[[package]]
+name = "tencentcloud-sdk-python-common"
+version = "3.1.145"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/1e/05/db62f1714c5e894ba6da6839dbee41fa5642cdf49bb3781b325a4fb764e3/tencentcloud_sdk_python_common-3.1.145.tar.gz", hash = "sha256:e6142420860ead585de7d0e9bec8ddcf58fffea9b91b52992851e8a671a04380", size = 22677, upload-time = "2026-07-29T20:13:30.572Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b2/cc/4a0d695772380c614c6641c3278a225285bcdd131b6f8dde550ac02794bc/tencentcloud_sdk_python_common-3.1.145-py2.py3-none-any.whl", hash = "sha256:200e4bf0b92bff36049fdb49453e800c946a6a6a4241a03ae25464f105c00058", size = 34276, upload-time = "2026-07-29T20:13:28.404Z" },
 ]
 
 [[package]]

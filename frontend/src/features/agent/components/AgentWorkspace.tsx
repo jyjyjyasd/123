@@ -63,6 +63,7 @@ import { CanvasArea } from "./CanvasArea";
 
 
 import { ExtendModal } from "./ExtendModal";
+import type { ExtendModalHandle } from "./ExtendModal";
 
 
 
@@ -71,6 +72,7 @@ import { ExtendModal } from "./ExtendModal";
 
 
 import { ResolutionExtendModal } from "./ResolutionExtendModal";
+import type { ResolutionExtendModalHandle } from "./ResolutionExtendModal";
 import { StyleTagPopover } from "./StyleTagPopover";
 import type { PresetStyleTag } from "../data/preset-style-tags";
 import { LayoutTagPopover } from "./LayoutTagPopover";
@@ -2330,7 +2332,7 @@ export function AgentWorkspace() {
 
 
 
-  const [showExtendModal, setShowExtendModal] = useState(false);
+  const extendModalRef = useRef<ExtendModalHandle>(null);
 
 
 
@@ -2338,23 +2340,7 @@ export function AgentWorkspace() {
 
 
 
-  const [isExtending, setIsExtending] = useState(false);
-
-
-
-
-
-
-
-  const [extendBaseImageUrl, setExtendBaseImageUrl] = useState<string | undefined>(undefined);
-
-
-
-
-
-
-
-  const [extendBaseImageRatio, setExtendBaseImageRatio] = useState<string | undefined>(undefined);
+  const resolutionModalRef = useRef<ResolutionExtendModalHandle>(null);
 
 
 
@@ -2370,7 +2356,6 @@ export function AgentWorkspace() {
 
 
 
-  const [showResolutionModal, setShowResolutionModal] = useState(false);
 
 
 
@@ -2378,7 +2363,6 @@ export function AgentWorkspace() {
 
 
 
-  const [isResolutionExtending, setIsResolutionExtending] = useState(false);
 
 
 
@@ -2386,7 +2370,6 @@ export function AgentWorkspace() {
 
 
 
-  const [resolutionExtendBaseImageUrl, setResolutionExtendBaseImageUrl] = useState<string | undefined>(undefined);
 
 
 
@@ -2394,7 +2377,20 @@ export function AgentWorkspace() {
 
 
 
-  const [resolutionExtendBaseImageRatio, setResolutionExtendBaseImageRatio] = useState<string | undefined>(undefined);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -3925,62 +3921,8 @@ export function AgentWorkspace() {
 
 
 
-  const handleResolutionExtend = async (ratios: string[], res: string) => {
-
-
-
-
-
-
-
-    setIsResolutionExtending(true);
-
-
-
-
-
-
-
-    try {
-
-
-
-
-
-
-
-      await triggerExtend(ratios, res, resolutionExtendBaseImageUrl);
-
-
-
-
-
-
-
-    } finally {
-
-
-
-
-
-
-
-      setIsResolutionExtending(false);
-
-
-
-
-
-
-
-    }
-
-
-
-
-
-
-
+  const handleResolutionExtend = async (ratios: string[], res: string, baseImageUrl?: string) => {
+    await triggerExtend(ratios, res, baseImageUrl);
   };
 
 
@@ -4013,47 +3955,8 @@ export function AgentWorkspace() {
 
 
 
-    setShowExtendModal(false);
-
-
-
-
-
-
-
-    setShowResolutionModal(false);
-
-
-
-
-
-
-
-    setExtendBaseImageUrl(undefined);
-
-
-
-
-
-
-
-    setExtendBaseImageRatio(undefined);
-
-
-
-
-
-
-
-    setResolutionExtendBaseImageUrl(undefined);
-
-
-
-
-
-
-
-    setResolutionExtendBaseImageRatio(undefined);
+    extendModalRef.current?.close();
+    resolutionModalRef.current?.close();
 
 
 
@@ -4078,38 +3981,8 @@ export function AgentWorkspace() {
 
 
   const handleOpenExtendModal = (baseImageUrl?: string, ratio?: string) => {
-
-
-
-
-
-
-
     if (!session?.generation_id && (!session?.archived_images || session.archived_images.length === 0)) return;
-
-
-
-
-
-
-
-    setExtendBaseImageUrl(baseImageUrl);
-
-
-
-
-
-
-
-    setExtendBaseImageRatio(ratio);
-
-
-
-
-
-
-
-    setShowExtendModal(true);
+    extendModalRef.current?.open(baseImageUrl, ratio);
 
 
 
@@ -4134,38 +4007,8 @@ export function AgentWorkspace() {
 
 
   const handleOpenResolutionModal = (baseImageUrl?: string, ratio?: string) => {
-
-
-
-
-
-
-
     if (!session?.generation_id && (!session?.archived_images || session.archived_images.length === 0)) return;
-
-
-
-
-
-
-
-    setResolutionExtendBaseImageUrl(baseImageUrl);
-
-
-
-
-
-
-
-    setResolutionExtendBaseImageRatio(ratio);
-
-
-
-
-
-
-
-    setShowResolutionModal(true);
+    resolutionModalRef.current?.open(baseImageUrl, ratio);
 
 
 
@@ -8139,62 +7982,8 @@ export function AgentWorkspace() {
 
 
 
-  const handleExtend = async (ratios: string[], resolution?: "2k" | "4k") => {
-
-
-
-
-
-
-
-    setIsExtending(true);
-
-
-
-
-
-
-
-    try {
-
-
-
-
-
-
-
-      await triggerExtend(ratios, resolution, extendBaseImageUrl);
-
-
-
-
-
-
-
-    } finally {
-
-
-
-
-
-
-
-      setIsExtending(false);
-
-
-
-
-
-
-
-    }
-
-
-
-
-
-
-
+  const handleExtend = async (ratios: string[], resolution?: "2k" | "4k", baseImageUrl?: string) => {
+    await triggerExtend(ratios, resolution, baseImageUrl);
   };
 
 
@@ -28824,118 +28613,13 @@ export function AgentWorkspace() {
 
 
 
-      {showExtendModal && session && (
-
-
-
-
-
-
-
+      {session && (
         <ExtendModal
-
-
-
-
-
-
-
+          ref={extendModalRef}
           session={session}
-
-
-
-
-
-
-
-          baseImageUrl={extendBaseImageUrl}
-
-
-
-
-
-
-
-          currentRatio={extendBaseImageRatio || session.aspect_ratio}
-
-
-
-
-
-
-
           onExtend={handleExtend}
-
-
-
-
-
-
-
           tasks={activeExtendTasks}
-
-
-
-
-
-
-
-          onClose={() => {
-
-
-
-
-
-
-
-            setShowExtendModal(false);
-
-
-
-
-
-
-
-            setExtendBaseImageUrl(undefined);
-
-
-
-
-
-
-
-            setExtendBaseImageRatio(undefined);
-
-
-
-
-
-
-
-          }}
-
-
-
-
-
-
-
-          isLoading={isExtending}
-
-
-
-
-
-
-
         />
-
-
-
-
-
-
-
       )}
 
 
@@ -28960,118 +28644,13 @@ export function AgentWorkspace() {
 
 
 
-      {showResolutionModal && session && (
-
-
-
-
-
-
-
+      {session && (
         <ResolutionExtendModal
-
-
-
-
-
-
-
+          ref={resolutionModalRef}
           session={session}
-
-
-
-
-
-
-
           onExtend={handleResolutionExtend}
-
-
-
-
-
-
-
           tasks={activeResolutionTasks}
-
-
-
-
-
-
-
-          currentRatio={resolutionExtendBaseImageRatio}
-
-
-
-
-
-
-
-          baseImageUrl={resolutionExtendBaseImageUrl}
-
-
-
-
-
-
-
-          onClose={() => {
-
-
-
-
-
-
-
-            setShowResolutionModal(false);
-
-
-
-
-
-
-
-            setResolutionExtendBaseImageUrl(undefined);
-
-
-
-
-
-
-
-            setResolutionExtendBaseImageRatio(undefined);
-
-
-
-
-
-
-
-          }}
-
-
-
-
-
-
-
-          isLoading={isResolutionExtending}
-
-
-
-
-
-
-
         />
-
-
-
-
-
-
-
       )}
 
 
