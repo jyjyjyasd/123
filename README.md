@@ -69,6 +69,16 @@ cd frontend && pnpm typecheck && pnpm lint
 
 版本号自 `v0.1.0`（2026-04-23 首个端到端可用版本）起按 [semver](https://semver.org/lang/zh-CN/) 计：minor 对应"新功能 / 大重构"，patch 对应"体验打磨 / bug 修复"。Phase 1 全程在 `0.x`，Phase 2 切真 SSO / 对象存储后再升 `1.0`。
 
+### v0.9.1 — 2026-08-03 · 优化上传风格参考图时当前风格选择区的点击热区
+
+- **动机**：用户反馈在上传风格参考图后，如果先点击了其他推荐风格，再次切回选中“当前风格（参考图片）”时可点击区域过小、且操作不便。
+- **改动点**：
+  - **前端 / `StyleSelector.tsx`**：移除在有 `hasStyleRef` 时对 `onClick` 的拦截，允许直接点击选中；
+  - **前端 / `StyleSelector.tsx`**：在 `hasStyleRef` 为真时不再对子元素 `div` 阻止点击事件冒泡，使得整个输入框区域（包含内部 textarea）皆为点击热区；
+  - **前端 / `StyleSelector.tsx`**：根据 `hasStyleRef` 动态调整 `cursor` 样式，在有参考图时将其呈现为 `pointer`，符合“只读选择”按钮的语义，避免误导。
+- **取舍**：
+  - **不触发 Focus**：在有风格参考图时，选中“当前风格（参考图片）”直接设为选中态，不再自动聚焦 textarea 或弹出虚拟键盘。
+
 ### v0.9.0 — 2026-05-14 · 参考图改走 apimart 专用上传端点（弃用 base64 内联）
 
 - **动机**：apimart 上线了 `POST /v1/uploads/images` 专用上传端点，并在 generation 接口文档里加了 `<Warning>` 标注 "不再支持在生成接口中直接传入 base64 图片数据"。v0.8 那条"参考图绑 127.0.0.1 → 只能 base64"的限制由供应商主动解掉了 —— 既是性能优化（base64 +33% 膨胀 + JSON 序列化 + httpx 复制三次，单图内存峰值约 4× 原图），也是为了避开上游计划下线的旧路径

@@ -275,6 +275,7 @@ type ErrorCode =
 | 编辑端支持 1–5 张参考图（v0.8 起 `image_urls` JSON 数组；之前是 multipart 同字段名重复） | schema 用 `generations.reference_file_ids` JSON 数组（迁移 `b1c2d3e4f567`）。apimart 支持 16 张，本期保持 5；提到上限是另一个独立需求 |
 | 尺寸从 3 档枚举（square/landscape/portrait）改为 7 档场景化预设 + edit auto，DB 存真实 `WIDTHxHEIGHT` | 旧代理商 2026-04-28 确认上游接受任何满足官方约束的 WxH；apimart v0.8 实测也接受像素 size。前端 UI 走"按场景选"，DB 存真实像素，前端缩略图用 `style.aspectRatio` 直接渲染 — 任意 W×H 都对，不再受 Tailwind JIT 静态类名约束。详见 §7 表与 size-presets.ts；迁移 `c2d3e4f56789` 按 action 把旧枚举映射成像素值 |
 | 参考图上传与生成提交解耦：选完图立即 `POST /api/uploads` 拿 `file_id`，提交 `/api/generations` 时只带 `reference_file_ids` | 旧的"提交时一并 multipart 上传"在大图下没有可见进度（fetch 无 upload-progress 事件），用户等待时不知道发生了什么。拆开后每张缩略图独立显示进度 / 成功 / 失败 / 重试，与微信/Notion/ChatGPT 一致。前端用 XHR 监听 `upload.progress`（见 `lib/api.ts · apiUpload`）。orphan upload 由现有 7 天 GC 兜底，不加 DELETE 端点 |
+| 在上传风格参考图后当前风格输入框改为只读按钮并扩大点击热区（v0.9.1） | 当有参考图时风格不可编辑，为了方便用户切回“当前风格（参考图片）”，移除了 hasStyleRef 时的点击拦截和冒泡阻断，将输入框的整块区域作为可点击热区，并将 cursor 动态设为 pointer。 |
 
 ---
 
