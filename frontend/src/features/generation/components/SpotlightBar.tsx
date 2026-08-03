@@ -167,7 +167,7 @@ export const SpotlightBar = ({
     el.style.height = `${Math.min(el.scrollHeight, TEXTAREA_MAX_PX)}px`;
   }, [prompt]);
 
-  const handleAddFiles = async (incoming: File[]) => {
+  async function handleAddFiles(incoming: File[]) {
     if (isInputBusy || incoming.length === 0) return;
 
     setIsPreparingRefs(true);

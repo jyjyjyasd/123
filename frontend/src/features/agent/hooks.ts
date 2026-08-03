@@ -218,6 +218,21 @@ export function useAgentSession(): UseAgentSessionReturn {
       setIsStreaming(true);
       setStreamingContent("");
 
+      // 乐观更新：在网络流式开始前，立即在本地追加用户的消息，避免首屏或发送后出现空白无反馈
+      setSession((prev) => {
+        if (!prev) return null;
+        const optimisticMsg = {
+          id: `temp-${Date.now()}`,
+          role: "user" as const,
+          content: message,
+          timestamp: new Date().toISOString(),
+        };
+        return {
+          ...prev,
+          clarify_messages: [...prev.clarify_messages, optimisticMsg],
+        };
+      });
+
       const controller = new AbortController();
       abortRef.current = controller;
 

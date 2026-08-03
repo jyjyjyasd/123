@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     tencentcloud_secret_id: str = Field(default="")
     tencentcloud_secret_key: str = Field(default="")
     tencentcloud_sub_app_id: str = Field(default="")
+    tencentcloud_region: str = Field(default="ap-guangzhou")
 
     apimart_base_url: str = Field(default="https://api.apimart.ai")
     apimart_api_key: str = Field(default="")
@@ -43,8 +44,8 @@ class Settings(BaseSettings):
 
     # ── Agent 对话 LLM ──────────────────────────────────────────────────────────
     agent_llm_key: str = Field(default="")
-    agent_llm_base: str = Field(default="https://api.apiyi.com/v1")
-    agent_llm_model: str = Field(default="gpt-5.4")
+    agent_llm_base: str = Field(default="https://api.apimart.ai/v1")
+    agent_llm_model: str = Field(default="gemini-3.5-flash-lite")
 
     @property
     def effective_agent_llm_key(self) -> str:

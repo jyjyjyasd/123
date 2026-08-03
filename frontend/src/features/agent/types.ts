@@ -40,7 +40,7 @@ export interface StreamB {
   layout_reference_image?: string | null;
   subject_reference_image?: string | null;
   subject_reference_image_type?: "subject" | "logo" | "other" | null;
-  subject_materials?: Array<{ id: string; url: string; type: string }> | null;
+  subject_materials?: Array<{ id: string; url: string; type: string; description?: string }> | null;
   style_recommendations?: StyleRecommendation[] | null;
 }
 
@@ -101,6 +101,7 @@ export interface AgentSession {
   archived_images?: VersionGroup[];
   error_message?: string | null;
   design_json?: DesignJson | null;
+  subject_description?: string | null;
   created_at: string;
   updated_at: string;
 }

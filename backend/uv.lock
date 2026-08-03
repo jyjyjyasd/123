@@ -504,6 +504,7 @@ dependencies = [
     { name = "sqlalchemy", extra = ["asyncio"] },
     { name = "tencentcloud-sdk-python" },
     { name = "tencentcloud-sdk-python-common" },
+    { name = "tencentcloud-sdk-python-vod" },
     { name = "uvicorn", extra = ["standard"] },
 ]
 
@@ -527,6 +528,7 @@ requires-dist = [
     { name = "sqlalchemy", extras = ["asyncio"], specifier = ">=2.0.49" },
     { name = "tencentcloud-sdk-python", specifier = ">=3.1.141" },
     { name = "tencentcloud-sdk-python-common", specifier = ">=3.1.145" },
+    { name = "tencentcloud-sdk-python-vod", specifier = ">=3.1.141" },
     { name = "uvicorn", extras = ["standard"], specifier = ">=0.46.0" },
 ]
 
@@ -882,6 +884,18 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/1e/05/db62f1714c5e894ba6da6839dbee41fa5642cdf49bb3781b325a4fb764e3/tencentcloud_sdk_python_common-3.1.145.tar.gz", hash = "sha256:e6142420860ead585de7d0e9bec8ddcf58fffea9b91b52992851e8a671a04380", size = 22677, upload-time = "2026-07-29T20:13:30.572Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/b2/cc/4a0d695772380c614c6641c3278a225285bcdd131b6f8dde550ac02794bc/tencentcloud_sdk_python_common-3.1.145-py2.py3-none-any.whl", hash = "sha256:200e4bf0b92bff36049fdb49453e800c946a6a6a4241a03ae25464f105c00058", size = 34276, upload-time = "2026-07-29T20:13:28.404Z" },
+]
+
+[[package]]
+name = "tencentcloud-sdk-python-vod"
+version = "3.1.145"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "tencentcloud-sdk-python-common" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/d6/69/673fe70558bcf18e0731b526787606cfa81364ec83e64c9c13319bb6ce3e/tencentcloud_sdk_python_vod-3.1.145.tar.gz", hash = "sha256:fa5fc4b442b44fd1b6a23f4994d3d1f4c319016709f51c7ca1a09eaf42ee9de9", size = 455970, upload-time = "2026-07-29T20:19:35.76Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/89/ac/a24a87d5b3d0fe501f99a82100ea186cac6df046cc8b5d3330b3c88238de/tencentcloud_sdk_python_vod-3.1.145-py2.py3-none-any.whl", hash = "sha256:f4048ede8803974bd3d5817d3c0a87b7832832ebfdbc519812a59a3bfbe4be88", size = 464653, upload-time = "2026-07-29T20:19:33.377Z" },
 ]
 
 [[package]]

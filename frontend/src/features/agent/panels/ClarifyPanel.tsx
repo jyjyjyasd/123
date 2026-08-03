@@ -3,6 +3,7 @@
 // 从 AgentWorkspace.tsx 的消息列表区域提取
 // 只消费 clarify_messages 和 isStreaming，不依赖 formData
 
+import { useState } from "react";
 import { ChatBubble } from "../components/ChatBubble";
 import type { AgentSession, ClarifyMessage } from "../types";
 
@@ -25,6 +26,9 @@ export function ClarifyPanel({
   setInput,
   updateParams,
 }: ClarifyPanelProps) {
+  const [isEditingCustom, setIsEditingCustom] = useState(false);
+  const [customValue, setCustomValue] = useState("");
+
   return (
     <div style={{ display: "flex", flexDirection: "column" }}>
       {messages.length === 0 && !isStreaming && (
@@ -153,6 +157,134 @@ export function ClarifyPanel({
                       {reply}
                     </button>
                   ))}
+
+                  {isEditingCustom ? (
+                    <div
+                      key="custom-reply-edit"
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        background: "#ffffff",
+                        border: "1.5px solid #37352f",
+                        borderRadius: 16,
+                        padding: "2px 8px 2px 12px",
+                        height: 28,
+                        boxSizing: "border-box",
+                        boxShadow: "0 1px 3px rgba(55,53,47,0.08)",
+                        animation: "fadeIn 0.15s ease",
+                      }}
+                    >
+                      <input
+                        type="text"
+                        autoFocus
+                        value={customValue}
+                        onChange={(e) => setCustomValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            e.preventDefault();
+                            const val = customValue.trim();
+                            if (val) {
+                              onSendMessage(val);
+                              setCustomValue("");
+                              setIsEditingCustom(false);
+                            }
+                          } else if (e.key === "Escape") {
+                            setIsEditingCustom(false);
+                            setCustomValue("");
+                          }
+                        }}
+                        placeholder="输入自定义内容..."
+                        style={{
+                          border: "none",
+                          outline: "none",
+                          fontSize: 12,
+                          color: "#37352f",
+                          width: 130,
+                          padding: 0,
+                          background: "transparent",
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          const val = customValue.trim();
+                          if (val) {
+                            onSendMessage(val);
+                            setCustomValue("");
+                            setIsEditingCustom(false);
+                          }
+                        }}
+                        disabled={!customValue.trim()}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: customValue.trim() ? "#37352f" : "#d3d1cb",
+                          fontSize: 12,
+                          cursor: customValue.trim() ? "pointer" : "not-allowed",
+                          padding: "0 4px",
+                          fontWeight: 600,
+                          marginLeft: 4,
+                        }}
+                      >
+                        发送
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingCustom(false);
+                          setCustomValue("");
+                        }}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#787774",
+                          fontSize: 12,
+                          cursor: "pointer",
+                          padding: "0 4px",
+                          marginLeft: 2,
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      key="custom-reply"
+                      onClick={() => {
+                        if (isStreaming) return;
+                        setIsEditingCustom(true);
+                      }}
+                      disabled={isStreaming}
+                      style={{
+                        background: "#ffffff",
+                        border: "1px dashed rgba(55,53,47,0.24)",
+                        borderRadius: 16,
+                        padding: "6px 12px",
+                        fontSize: 12,
+                        color: "#787774",
+                        cursor: isStreaming ? "not-allowed" : "pointer",
+                        boxShadow: "0 1px 3px rgba(55,53,47,0.04)",
+                        transition: "all 0.15s ease",
+                        userSelect: "none",
+                        height: 28,
+                        display: "flex",
+                        alignItems: "center",
+                        boxSizing: "border-box",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (isStreaming) return;
+                        e.currentTarget.style.borderColor = "#37352f";
+                        e.currentTarget.style.borderStyle = "solid";
+                        e.currentTarget.style.background = "#f7f6f3";
+                      }}
+                      onMouseLeave={(e) => {
+                        if (isStreaming) return;
+                        e.currentTarget.style.borderColor = "rgba(55,53,47,0.24)";
+                        e.currentTarget.style.borderStyle = "dashed";
+                        e.currentTarget.style.background = "#ffffff";
+                      }}
+                    >
+                      自定义...
+                    </button>
+                  )}
                 </div>
               )}
             </div>

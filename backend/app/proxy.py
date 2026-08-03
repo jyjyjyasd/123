@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import hashlib
 import json as _json
 import logging
 import time
@@ -66,7 +67,7 @@ def _get_vod_client(settings: Settings) -> vod_client.VodClient:
         settings.tencentcloud_secret_id,
         settings.tencentcloud_secret_key
     )
-    return vod_client.VodClient(cred, "")
+    return vod_client.VodClient(cred, settings.tencentcloud_region or "ap-guangzhou")
 
 
 def _get_sub_app_id(settings: Settings, client: vod_client.VodClient) -> int:
@@ -98,14 +99,20 @@ def _get_sub_app_id(settings: Settings, client: vod_client.VodClient) -> int:
 
 # ── 参考图上传 (VOD 媒资中转) ──────────────────────────────────────────
 
-async def _upload_reference_to_vod(
+# 内存级缓存与锁：md5_hash -> (vod_file_id, timestamp)
+_VOD_FILE_ID_CACHE: dict[str, tuple[str, float]] = {}
+_UPLOAD_LOCKS: dict[str, asyncio.Lock] = {}
+_GLOBAL_LOCK = asyncio.Lock()
+
+
+async def _upload_reference_to_vod_uncached(
     img_bytes: bytes,
     mime: str,
     settings: Settings,
     client: vod_client.VodClient,
     sub_app_id: int
 ) -> str:
-    """上传本地字节至腾讯云 VOD，返回 FileId。
+    """物理上传本地字节至腾讯云 VOD，返回 FileId。
     
     使用 asyncio.to_thread 包装阻塞的 SDK 调用。
     """
@@ -148,6 +155,58 @@ async def _upload_reference_to_vod(
         raise AppError("upstream_error", f"上传参考图失败: {e!s}"[:200])
 
 
+async def _upload_reference_to_vod(
+    img_bytes: bytes,
+    mime: str,
+    settings: Settings,
+    client: vod_client.VodClient,
+    sub_app_id: int
+) -> str:
+    """带缓存与并发锁的参考图上传。
+    
+    对相同图片字节码，利用 MD5 唯一标识，仅允许单个协程进行物理上传，其余并发任务复用结果。
+    """
+    # 1. 计算图片字节的 MD5 唯一标识
+    h = hashlib.md5(img_bytes).hexdigest()
+    now_ts = time.time()
+
+    # 2. 检查缓存（设定 30 分钟/1800s 有效期）
+    async with _GLOBAL_LOCK:
+        if h in _VOD_FILE_ID_CACHE:
+            file_id, ts = _VOD_FILE_ID_CACHE[h]
+            if now_ts - ts < 1800:
+                logger.info("VOD reference upload cache hit for hash %s, file_id %s", h, file_id)
+                return file_id
+            else:
+                # 缓存已过期，清理
+                del _VOD_FILE_ID_CACHE[h]
+        
+        # 获取或创建对应 md5 的并发锁
+        if h not in _UPLOAD_LOCKS:
+            _UPLOAD_LOCKS[h] = asyncio.Lock()
+        lock = _UPLOAD_LOCKS[h]
+
+    # 3. 加锁执行物理上传
+    async with lock:
+        # 双重检查锁（防止排队等待锁的协程在被唤醒后重复上传）
+        if h in _VOD_FILE_ID_CACHE:
+            file_id, ts = _VOD_FILE_ID_CACHE[h]
+            return file_id
+
+        # 调用物理上传
+        file_id = await _upload_reference_to_vod_uncached(
+            img_bytes=img_bytes,
+            mime=mime,
+            settings=settings,
+            client=client,
+            sub_app_id=sub_app_id,
+        )
+
+        # 写入缓存
+        _VOD_FILE_ID_CACHE[h] = (file_id, time.time())
+        return file_id
+
+
 # ── 任务轮询与图片下载 ───────────────────────────────────────────────
 
 _POLL_INTERVAL_S = 3.0
@@ -170,8 +229,13 @@ async def _poll_task_until_done(
         if status == "FINISH":
             # 生图任务的结果在 AigcImageTask.Output
             if hasattr(resp, "AigcImageTask") and resp.AigcImageTask:
-                if resp.AigcImageTask.Status == "FAIL":
-                    raise AppError("upstream_error", f"任务失败: {resp.AigcImageTask.ErrCodeExt}")
+                inner_status = getattr(resp.AigcImageTask, "Status", "")
+                task_err_code = getattr(resp.AigcImageTask, "ErrCode", 0) or 0
+                task_err_msg = getattr(resp.AigcImageTask, "Message", "") or ""
+                task_err_ext = getattr(resp.AigcImageTask, "ErrCodeExt", "") or ""
+                if inner_status == "FAIL" or task_err_code != 0 or task_err_msg or task_err_ext:
+                    err_detail = task_err_msg or task_err_ext or f"ErrCode {task_err_code}"
+                    raise AppError("upstream_error", f"任务失败: {err_detail}")
                 if hasattr(resp.AigcImageTask, "Output") and resp.AigcImageTask.Output:
                     file_infos = getattr(resp.AigcImageTask.Output, "FileInfos", [])
                     if file_infos:
@@ -246,12 +310,15 @@ async def _create_image_task(
         elif "x" in size_key:
             params["ExtInfo"] = '{"AdditionalParameters": "{\\"size\\":\\"' + size_key + '\\"}"}'
         else:
-            params["OutputConfig"]["AspectRatio"] = size
+            if size_key == "9:32":
+                params["OutputConfig"]["AspectRatio"] = "1:3"
+            else:
+                params["OutputConfig"]["AspectRatio"] = size
             
         # 参考图处理
         if ref_file_ids:
-            # Type must be 'FileId' when using VOD Media
-            params["FileInfos"] = [{"Type": "FileId", "FileId": fid} for fid in ref_file_ids]
+            # Type must be 'File' when using VOD Media
+            params["FileInfos"] = [{"Type": "File", "FileId": fid} for fid in ref_file_ids]
             
         req.from_json_string(_json.dumps(params))
         resp = client.CreateAigcImageTask(req)

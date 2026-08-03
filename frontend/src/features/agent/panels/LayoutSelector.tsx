@@ -1,42 +1,48 @@
-﻿// features/agent/panels/LayoutSelector.tsx
+// features/agent/panels/LayoutSelector.tsx
 // 排版选择区：消费 DesignStore.layout_recommendations 和 active_layout
 // 从 AgentWorkspace.tsx Stage 1 Card 的 section 3 提取
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDesignStore } from "../design-store";
 import { LayoutTagPopover } from "../components/LayoutTagPopover";
 import type { PresetLayoutTag } from "../data/preset-layout-tags";
 import type { LayoutRecommendation } from "../types";
 
 interface LayoutSelectorProps {
-  isRefreshing: boolean;
   hasLayoutRef: boolean;
   layoutDescription: string;
-  onSelectLayout: (rec: LayoutRecommendation) => void;
+  onSendMessage?: (msg: string) => Promise<void>;
+  onSelectLayout: (rec: LayoutRecommendation, source: 'custom' | 'recommendation') => void;
   onSelectTag: (tag: PresetLayoutTag) => void;
-  onRefreshLayouts: () => Promise<void>;
 }
 
 export function LayoutSelector({
-  isRefreshing,
   hasLayoutRef,
   layoutDescription,
+  onSendMessage,
   onSelectLayout,
   onSelectTag,
-  onRefreshLayouts,
 }: LayoutSelectorProps) {
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleRefreshLayouts = async () => {
+    setIsRefreshing(true);
+    if (onSendMessage) await onSendMessage("由于当前画面没有提供排版参考图，请重新推荐 4 种不同方向的海报排版方案供我选择。");
+    setIsRefreshing(false);
+  };
   const activeLayout = useDesignStore((s) => s.active_layout);
   const layoutRecommendations = useDesignStore((s) => s.layout_recommendations);
-  const dirtyLayoutSelection = useDesignStore((s) => s.dirty_layout_selection);
+  const confirmedSource = useDesignStore((s) => s.confirmed_layout_source);
+  const confirmedId = useDesignStore((s) => s.confirmed_layout_id);
 
   const layoutTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  // isCurrentActive: AI 推荐未被动过 → active_layout === null
-  const isCurrentActive = !dirtyLayoutSelection || activeLayout === null;
+  // isCurrentActive: true 当未确认，或明确确认为 custom（包括 agent 整理的默认文本视为 custom 的起点，如果没有选中别的）
+  const isCurrentActive = confirmedSource === null || confirmedSource === 'custom' || confirmedSource === 'agent_input';
 
   // candidatesList
   const candidatesList: LayoutRecommendation[] = [];
-  if (activeLayout && !isCurrentActive) {
+  if (activeLayout && !isCurrentActive && confirmedSource !== 'tag') {
     const isPresent = layoutRecommendations.some(
       (r) => r.name === activeLayout.name
     );
@@ -46,9 +52,26 @@ export function LayoutSelector({
   }
   candidatesList.push(...layoutRecommendations);
 
-  const rawLayoutVal = hasLayoutRef ? "排版参考图" : (layoutDescription || "");
+  const REF_INDICATOR = "参考图片";
+  const rawLayoutVal = hasLayoutRef ? REF_INDICATOR : (layoutDescription || "");
   const trimmedVal = rawLayoutVal.trim();
-  const layoutVal = !isCurrentActive ? "" : (trimmedVal || "");
+  
+  // 选中任意来源（custom/recommendation/tag/agent_input）后，统一展示 activeLayout.name（中文排版名），
+  // 与 StyleSelector 保持对称，避免选中推荐后回退到英文/原始描述。
+  // 参考图片权重最高：上传参考图后输入框强制显示 "参考图片"，删除后才恢复原有逻辑。
+  const layoutVal = hasLayoutRef
+    ? REF_INDICATOR
+    : activeLayout ? activeLayout.name : (trimmedVal || "");
+
+  // 同步 textarea DOM value：解决 defaultValue 只在首次挂载生效、用户上传/删除参考图后文字不更新的 bug
+  useEffect(() => {
+    const el = layoutTextareaRef.current;
+    if (el) {
+      el.value = layoutVal;
+      el.style.height = "auto";
+      el.style.height = el.scrollHeight + "px";
+    }
+  }, [layoutVal]);
 
   if (layoutRecommendations.length === 0 && !hasLayoutRef && !trimmedVal) return null;
 
@@ -66,8 +89,16 @@ export function LayoutSelector({
           <div
             onClick={() => {
               if (isRefreshing) return;
+              if (hasLayoutRef) return;
               if (!isCurrentActive) {
-                useDesignStore.getState().applyLayoutRecommendation(0);
+                const val = layoutTextareaRef.current?.value.trim() || layoutVal;
+                const item: LayoutRecommendation = {
+                  index: 99,
+                  name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                  description: val,
+                };
+                onSelectLayout(item, 'custom');
+                setTimeout(() => layoutTextareaRef.current?.focus(), 0);
               }
             }}
             style={{
@@ -76,7 +107,8 @@ export function LayoutSelector({
               gap: 8,
               padding: "8px 10px",
               background: isCurrentActive ? "rgba(55,53,47,0.04)" : "#fff",
-              border: isCurrentActive ? "2px solid #37352f" : "1px solid rgba(55,53,47,0.12)",
+              border: isCurrentActive ? "1.5px solid #37352f" : "1px solid rgba(55,53,47,0.12)",
+              boxShadow: isCurrentActive ? "0 0 10px rgba(55, 53, 47, 0.25)" : "none",
               borderRadius: 6,
               textAlign: "left" as const,
               transition: "all 0.15s",
@@ -97,22 +129,30 @@ export function LayoutSelector({
                 }}
                 defaultValue={layoutVal}
                 placeholder="未提供排版描述，可在此自主填写"
-                readOnly={!isCurrentActive}
+                readOnly={!isCurrentActive || hasLayoutRef}
                 onFocus={(e) => {
-                  if (isCurrentActive) {
-                    e.target.style.outline = "none";
-                    e.target.style.border = "none";
-                  }
-                }}
-                onBlur={(e) => {
-                  const val = e.target.value.trim();
-                  if (val && val !== layoutVal) {
+                  e.target.style.outline = "none";
+                  e.target.style.border = "none";
+                  if (hasLayoutRef) return;
+                  if (!isCurrentActive) {
+                    const val = e.target.value.trim() || layoutVal;
                     const item: LayoutRecommendation = {
                       index: 99,
                       name: val.length > 30 ? val.slice(0, 27) + "..." : val,
                       description: val,
                     };
-                    onSelectLayout(item);
+                    onSelectLayout(item, 'custom');
+                  }
+                }}
+                onBlur={(e) => {
+                  const val = e.target.value.trim();
+                  if (val && (val !== layoutVal || confirmedSource !== 'custom')) {
+                    const item: LayoutRecommendation = {
+                      index: 99,
+                      name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                      description: val,
+                    };
+                    onSelectLayout(item, 'custom');
                   }
                 }}
                 style={{
@@ -131,7 +171,7 @@ export function LayoutSelector({
                 }}
               />
             </div>
-            {!isCurrentActive && (
+            {isCurrentActive && (
               <span style={{ fontSize: 11, fontWeight: 600, color: "#37352f" }}>✓</span>
             )}
           </div>
@@ -145,7 +185,7 @@ export function LayoutSelector({
             </div>
             {!hasLayoutRef && (
               <button
-                onClick={onRefreshLayouts}
+                onClick={handleRefreshLayouts}
                 disabled={isRefreshing}
                 style={{
                   fontSize: 11,
@@ -219,21 +259,20 @@ export function LayoutSelector({
             candidatesList.length > 0 && (
               <div style={{ display: "flex", flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
                 {candidatesList.map((rec) => {
-                  const isSelected = activeLayout
-                    ? (activeLayout.index === rec.index && activeLayout.name === rec.name)
-                    : false;
+                  const isSelected = confirmedSource === 'recommendation' && confirmedId === rec.name;
 
                   return (
                     <button
                       key={`${rec.index}-${rec.name}`}
-                      onClick={() => onSelectLayout(rec)}
+                      onClick={() => onSelectLayout(rec, 'recommendation')}
                       style={{
                         display: "flex",
                         alignItems: "center",
                         gap: 6,
                         padding: "5px 10px",
                         background: isSelected ? "rgba(55,53,47,0.04)" : "#fff",
-                        border: isSelected ? "2px solid #37352f" : "1px solid rgba(55,53,47,0.12)",
+                        border: isSelected ? "1.5px solid #37352f" : "1px solid rgba(55,53,47,0.12)",
+                        boxShadow: isSelected ? "0 0 10px rgba(55, 53, 47, 0.25)" : "none",
                         borderRadius: 6,
                         cursor: "pointer",
                         textAlign: "left" as const,
@@ -263,7 +302,7 @@ export function LayoutSelector({
                 })}
                 <LayoutTagPopover
                   onSelectTag={onSelectTag}
-                  selectedTagId={activeLayout?.index === 99 ? (activeLayout?.name || null) : null}
+                  selectedTagId={confirmedSource === 'tag' ? confirmedId : null}
                   disabled={isRefreshing}
                 />
               </div>

@@ -3,6 +3,7 @@
 // 从 AgentWorkspace.tsx Stage 1 Card 的 section 1 提取
 // 内部同时更新 DesignStore（setCopyRaw → dirty_copy）和 formData（通过 onCopyChange 回调）
 
+import { useState } from "react";
 import { RotateCw, RotateCcw, Trash2 } from "lucide-react";
 import { useDesignStore } from "../design-store";
 import { splitLabelAndValue, splitPipeSegments, autoResizeTextarea, getEffectiveLines } from "../copy-utils";
@@ -11,45 +12,60 @@ import type { MessageSection } from "../section-parser";
 type Density = "疏" | "中" | "密";
 
 interface CopyEditorProps {
-  // State
-  selectedDensity: Density;
-  setSelectedDensity: (d: Density) => void;
-  isRefreshingCopy: boolean;
-  setIsCopyEditing: (v: boolean) => void;
-  copyHistory: Record<number, string>;
-  pendingExtraCopyFields: string[];
-  setPendingExtraCopyFields: React.Dispatch<React.SetStateAction<string[]>>;
-
-  // Data
-  copyRaw: string; // formData.copy
+  copyRaw: string;
   textSection: MessageSection | undefined;
   isStreaming: boolean;
   isGenerating: boolean;
-
-  // Callbacks
-  onCopyChange: (copy: string) => void; // 通知 AgentWorkspace 更新 formData.copy
-  onRefreshCopy: () => void;
-  onUndoCopy: (globalSegIdx: number, lineIdx: number, segmentIdx: number) => void;
+  /** 文案刷新回调：传入密度和当前文案，返回刷新后的文案 */
+  onRefreshCopy?: (density: string, currentCopy: string) => Promise<string>;
+  onCopyChange: (copy: string) => void;
   onUpdateParams: (params: any) => Promise<void>;
 }
 
 export function CopyEditor({
-  selectedDensity,
-  setSelectedDensity,
-  isRefreshingCopy,
-  setIsCopyEditing,
-  copyHistory,
-  pendingExtraCopyFields,
-  setPendingExtraCopyFields,
   copyRaw,
   textSection,
   isStreaming,
   isGenerating,
-  onCopyChange,
   onRefreshCopy,
-  onUndoCopy,
+  onCopyChange,
   onUpdateParams,
 }: CopyEditorProps) {
+  const [selectedDensity, setSelectedDensity] = useState<Density>("中");
+  const [isRefreshingCopy, setIsRefreshingCopy] = useState(false);
+  
+  
+  const [copyHistory] = useState<Record<number, string>>({});
+  const [pendingExtraCopyFields, setPendingExtraCopyFields] = useState<string[]>([]);
+
+  const handleRefreshCopy = async () => {
+    if (!onRefreshCopy) return;
+    setIsRefreshingCopy(true);
+    try {
+      const refreshed = await onRefreshCopy(selectedDensity, copyRaw);
+      if (refreshed) {
+        updateCopy(refreshed);
+        onUpdateParams({ stream_a: { copy: refreshed } });
+      }
+    } finally {
+      setIsRefreshingCopy(false);
+    }
+  };
+
+  const handleUndoCopy = (globalSegIdx: number, lineIdx: number, segmentIdx: number) => {
+    if (copyHistory[globalSegIdx]) {
+      const allLines = copyRaw.split(" | ");
+      if (allLines[lineIdx]) {
+        const segs = allLines[lineIdx].split("/");
+        if (segs[segmentIdx]) {
+          segs[segmentIdx] = copyHistory[globalSegIdx];
+          allLines[lineIdx] = segs.join("/");
+          const newCopy = allLines.join(" | ");
+          updateCopy(newCopy);
+        }
+      }
+    }
+  };
   // 同步更新 DesignStore（dirty_copy = true）和 formData（保持兼容）
   const updateCopy = (newCopy: string) => {
     useDesignStore.getState().setCopyRaw(newCopy);
@@ -101,7 +117,7 @@ export function CopyEditor({
           </div>
           {/* 刷新按钮 */}
           <button
-            onClick={onRefreshCopy}
+            onClick={handleRefreshCopy}
             disabled={isRefreshingCopy || isStreaming || isGenerating}
             style={{
               display: "flex",
@@ -171,7 +187,7 @@ export function CopyEditor({
           updateCopy(allSegments.join(" | "));
         };
         const handleBlur = () => {
-          setIsCopyEditing(false);
+          
           onUpdateParams({
             stream_a: {
               copy: copyRaw,
@@ -305,7 +321,7 @@ export function CopyEditor({
                                   autoResizeTextarea(e.target);
                                 }}
                                 onFocus={(e) => {
-                                  setIsCopyEditing(true);
+                                  
                                   e.currentTarget.style.borderColor = "#37352f";
                                   e.currentTarget.style.background = "#fff";
                                   autoResizeTextarea(e.currentTarget);
@@ -352,7 +368,7 @@ export function CopyEditor({
                                     disabled={isRefreshingCopy || isStreaming || isGenerating}
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      onUndoCopy(currentGlobalIdx, idx, segmentIdx);
+                                      handleUndoCopy(currentGlobalIdx, idx, segmentIdx);
                                     }}
                                     title="退回优化前的文案"
                                     style={{
@@ -450,7 +466,7 @@ export function CopyEditor({
                     autoResizeTextarea(e.target);
                   }}
                   onFocus={(e) => {
-                    setIsCopyEditing(true);
+                    
                     e.currentTarget.style.borderColor = "#37352f";
                     e.currentTarget.style.background = "#fff";
                     autoResizeTextarea(e.currentTarget);
@@ -473,7 +489,7 @@ export function CopyEditor({
                         prev.filter((_, i) => i !== extraIdx)
                       );
                     }
-                    setIsCopyEditing(false);
+                    
                   }}
                   placeholder="请输入文案..."
                   ref={(el) => autoResizeTextarea(el)}

@@ -96,17 +96,17 @@ export const LayoutTagPopover: React.FC<LayoutTagPopoverProps> = ({
           gap: 4,
           fontSize: 11,
           fontWeight: 600,
-          color: selectedTagId ? "#fff" : "#37352f",
-          background: selectedTagId ? "#37352f" : "transparent",
+          color: "#37352f",
+          background: selectedTagId ? "rgba(55,53,47,0.04)" : "transparent",
           border: selectedTagId
-            ? "1px solid #37352f"
+            ? "1.5px solid #37352f"
             : "1px solid rgba(55,53,47,0.16)",
           padding: "4px 8px",
           borderRadius: 6,
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.6 : 1,
           transition: "all 0.15s ease",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+          boxShadow: selectedTagId ? "0 0 10px rgba(55, 53, 47, 0.25)" : "0 1px 2px rgba(0,0,0,0.02)",
         }}
         onMouseEnter={(e) => {
           if (!disabled && !selectedTagId) {
@@ -133,7 +133,7 @@ export const LayoutTagPopover: React.FC<LayoutTagPopoverProps> = ({
             d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h3a1 1 0 011 1v6a1 1 0 01-1 1h-3a1 1 0 01-1-1v-6z"
           />
         </svg>
-        <span>排版Tag</span>
+        <span>排版Tag{selectedTagId ? `: ${selectedTagId}` : ""}</span>
         {/* 展开/收起箭头 */}
         <svg
           style={{
@@ -215,7 +215,7 @@ export const LayoutTagPopover: React.FC<LayoutTagPopoverProps> = ({
               }}
             >
               {PRESET_LAYOUT_TAGS.map((tag) => {
-                const isSelected = selectedTagId === tag.id;
+                const isSelected = selectedTagId === tag.name || selectedTagId === tag.id;
                 return (
                   <div
                     key={tag.id}

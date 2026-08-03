@@ -124,14 +124,22 @@ def build_final_prompt(
         ref_lines.append(
             "- Layout reference image was analyzed only for composition, typography hierarchy, spacing, alignment, and visual weight distribution."
         )
+        
+    subject_mat = next((m for m in materials if isinstance(m, dict) and m.get("type") == "subject"), None)
+    subject_desc = subject_mat.get("description") if subject_mat else ""
     if visual.get("subject_reference_image"):
         ref_lines.append(
-            "- Subject reference image is the PRIMARY identity anchor for img2img. Preserve the same main object/person/pet/product identity, key silhouette, visible markings, and overall look; do not replace it with a generic substitute."
+            f"- Subject reference image is the PRIMARY identity anchor for img2img. The main subject reference is: {subject_desc if subject_desc else 'the provided image'}. Preserve the same main object/person/pet/product identity, key silhouette, visible markings, and overall look; do not replace it with a generic substitute."
         )
-    if any(isinstance(material, dict) and material.get("type") == "other" for material in materials):
+        
+    other_mats = [m for m in materials if isinstance(m, dict) and m.get("type") == "other"]
+    if other_mats:
+        other_descs = [m.get("description", "") for m in other_mats if m.get("description")]
+        desc_str = (" The specific supporting elements to include are: " + " / ".join(other_descs) + ".") if other_descs else ""
         ref_lines.append(
-            "- Additional supporting material images were attached and should be used only for user-requested supporting elements without replacing the main subject."
+            f"- Additional supporting material images were attached and should be used only for user-requested supporting elements without replacing the main subject.{desc_str}"
         )
+        
     reference_instruction = "\n".join(ref_lines)
 
     # ── 多尺寸延伸指令 ──
@@ -170,7 +178,8 @@ def build_final_prompt(
         f"The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.\n"
         f"- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.\n"
         f"- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, "
-        f"clean typography when text exists, no overlapping elements, masterpiece."
+        f"clean typography when text exists, no overlapping elements, masterpiece.\n"
+        f"- CRITICAL: The entire final generation prompt must be written entirely in English. Do not include Chinese characters."
     ).strip()
 
 

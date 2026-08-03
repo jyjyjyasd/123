@@ -1,7 +1,7 @@
 // features/agent/api.ts
 // API 调用层：封装所有 /api/agent/sessions/* 端点
 
-import type { AgentSession } from "./types";
+import type { AgentSession, StreamA, StreamB } from "./types";
 
 const BASE = "/api/agent/sessions";
 
@@ -23,20 +23,8 @@ export interface UpdateRequest {
   status?: string;
   aspect_ratio?: string;
   resolution?: string;
-  stream_a?: Partial<{
-    copy: string;
-    layout_notes: string;
-    layout_prompt: string;
-    pdf_document_url: string | null;
-    pdf_document_text: string | null;
-    pdf_document_name: string | null;
-    pdf_document_size: number | null;
-    density?: string;
-  }>;
-  stream_b?: Partial<{
-    visual_description: string;
-    denoising_strength: number;
-  }>;
+  stream_a?: Partial<StreamA>;
+  stream_b?: Partial<StreamB>;
   extended_images?: any[];
 }
 

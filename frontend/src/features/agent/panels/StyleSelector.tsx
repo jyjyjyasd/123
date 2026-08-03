@@ -68,12 +68,12 @@ export function StyleSelector({
   const friendlyVal = hasStyleRef ? REF_INDICATOR : resolveFriendlyStyleName(rawVal);
   const isNoStyle = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无明确指定视觉风格"].some(kw => friendlyVal.trim().toLowerCase().includes(kw)) || !friendlyVal;
   
-  // Custom input always shows either user's text or agent's extracted text.
-  // When activeStyle is from custom input, it will be the activeStyle.name, otherwise it's the friendlyVal.
+  // 选中任意来源（custom/recommendation/tag/agent_input）后，统一展示 activeStyle.name（中文风格名），
+  // 不再回退到 visualDescription（后端 visual_description 为英文生图提示词，仅用于图像生成）。
   // 参考图片权重最高：上传参考图后输入框强制显示 "参考图片"，删除后才恢复原有逻辑。
   const styleVal = hasStyleRef
     ? REF_INDICATOR
-    : (confirmedSource === 'custom' && activeStyle) ? activeStyle.name : (isNoStyle ? "" : friendlyVal);
+    : activeStyle ? activeStyle.name : (isNoStyle ? "" : friendlyVal);
 
   // 同步 textarea DOM value：解决 defaultValue 只在首次挂载生效、用户上传/删除参考图后文字不更新的 bug
   useEffect(() => {

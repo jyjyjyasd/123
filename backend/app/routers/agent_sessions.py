@@ -161,6 +161,7 @@ def _to_out(s: AgentSession) -> AgentSessionOut:
         archived_images=_archived(s.archived_images),
         error_message=s.error_message,
         design_json=load_json(s.design_json) if s.design_json else None,
+        subject_description=skill_runner.get_subject_description(s),
         created_at=s.created_at,
         updated_at=s.updated_at,
     )
@@ -510,13 +511,22 @@ async def upload_reference_image(
             existing_b["subject_reference_image"] = imageUrl
             existing_b["subject_reference_image_type"] = stype
 
-        if "subject_materials" not in existing_b or not isinstance(existing_b["subject_materials"], list):
-            existing_b["subject_materials"] = []
-        existing_b["subject_materials"].append({
+        new_mat = {
             "id": f"mat-{int(datetime.now(timezone.utc).timestamp())}-{uuid.uuid4().hex[:6]}",
             "url": imageUrl,
             "type": stype
-        })
+        }
+
+        if stype == "other":
+            from app.agent.llm_client import describe_reference_image
+            from app.storage import absolute_path_for
+            abs_path = absolute_path_for(row)
+            desc = await describe_reference_image(abs_path)
+            new_mat["description"] = desc
+
+        if "subject_materials" not in existing_b or not isinstance(existing_b["subject_materials"], list):
+            existing_b["subject_materials"] = []
+        existing_b["subject_materials"].append(new_mat)
     else:  # style
         existing_b["style_reference_image"] = imageUrl
         existing_b["reference_image"] = imageUrl  # 默认兼容主图

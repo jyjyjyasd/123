@@ -96,17 +96,17 @@ export const StyleTagPopover: React.FC<StyleTagPopoverProps> = ({
           gap: 4,
           fontSize: 11,
           fontWeight: 600,
-          color: selectedTagId ? "#fff" : "#37352f",
-          background: selectedTagId ? "#37352f" : "transparent",
+          color: "#37352f",
+          background: selectedTagId ? "rgba(55,53,47,0.04)" : "transparent",
           border: selectedTagId
-            ? "1px solid #37352f"
+            ? "1.5px solid #37352f"
             : "1px solid rgba(55,53,47,0.16)",
           padding: "4px 8px",
           borderRadius: 6,
           cursor: disabled ? "not-allowed" : "pointer",
           opacity: disabled ? 0.6 : 1,
           transition: "all 0.15s ease",
-          boxShadow: "0 1px 2px rgba(0,0,0,0.02)",
+          boxShadow: selectedTagId ? "0 0 10px rgba(55, 53, 47, 0.25)" : "0 1px 2px rgba(0,0,0,0.02)",
         }}
         onMouseEnter={(e) => {
           if (!disabled && !selectedTagId) {
@@ -133,7 +133,7 @@ export const StyleTagPopover: React.FC<StyleTagPopoverProps> = ({
             d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"
           />
         </svg>
-        <span>风格Tag</span>
+        <span>风格Tag{selectedTagId ? `: ${selectedTagId}` : ""}</span>
         {/* 展开/收起箭头 */}
         <svg
           style={{

@@ -20,13 +20,17 @@ interface DesignState {
 
   // ── 脏标记：true = 用户手动修改过，AI 新推荐不覆盖 ──
   dirty_copy: boolean;
-  dirty_style_selection: boolean;
-  dirty_layout_selection: boolean;
+
+  // ── 显式确认源 ──
+  confirmed_style_source: 'custom' | 'recommendation' | 'tag' | 'agent_input' | null;
+  confirmed_style_id: string | null;
+  confirmed_layout_source: 'custom' | 'recommendation' | 'tag' | 'agent_input' | null;
+  confirmed_layout_id: string | null;
 
   // ── 方法 ──
   setCopyRaw(text: string): void;
-  setActiveStyle(style: StyleRecommendation): void;
-  setActiveLayout(layout: LayoutRecommendation): void;
+  setActiveStyle(style: StyleRecommendation, source: 'custom' | 'recommendation' | 'tag' | 'agent_input', id?: string): void;
+  setActiveLayout(layout: LayoutRecommendation, source: 'custom' | 'recommendation' | 'tag' | 'agent_input', id?: string): void;
   setActiveRatio(ratio: string): void;
   setActiveResolution(resolution: string): void;
   setStyleRecommendations(recs: StyleRecommendation[]): void;
@@ -57,31 +61,49 @@ export const useDesignStore = create<DesignState>((set) => ({
   style_recommendations: [],
   layout_recommendations: [],
   dirty_copy: false,
-  dirty_style_selection: false,
-  dirty_layout_selection: false,
+  confirmed_style_source: null,
+  confirmed_style_id: null,
+  confirmed_layout_source: null,
+  confirmed_layout_id: null,
 
-  // 手动编辑 → dirty = true
+  // 手动编辑
   setCopyRaw: (text) => set({ copy_raw: text, dirty_copy: true }),
-  setActiveStyle: (style) => set({ active_style: style, dirty_style_selection: true }),
-  setActiveLayout: (layout) => set({ active_layout: layout, dirty_layout_selection: true }),
+  setActiveStyle: (style, source, id) => set({ 
+    active_style: style, 
+    confirmed_style_source: source,
+    confirmed_style_id: id ?? style.name 
+  }),
+  setActiveLayout: (layout, source, id) => set({ 
+    active_layout: layout, 
+    confirmed_layout_source: source,
+    confirmed_layout_id: id ?? layout.name 
+  }),
   setActiveRatio: (ratio) => set({ active_ratio: ratio }),
   setActiveResolution: (res) => set({ active_resolution: res }),
   setStyleRecommendations: (recs) => set({ style_recommendations: recs }),
   setLayoutRecommendations: (recs) => set({ layout_recommendations: recs }),
-  clearActiveStyle: () => set({ active_style: null, dirty_style_selection: false }),
-  clearActiveLayout: () => set({ active_layout: null, dirty_layout_selection: false }),
+  clearActiveStyle: () => set({ active_style: null, confirmed_style_source: null, confirmed_style_id: null }),
+  clearActiveLayout: () => set({ active_layout: null, confirmed_layout_source: null, confirmed_layout_id: null }),
 
-  // 接受推荐 → dirty = false
+  // 接受推荐
   applyStyleRecommendation: (index) =>
-    set((s) => ({
-      active_style: s.style_recommendations[index] ?? s.active_style,
-      dirty_style_selection: false,
-    })),
+    set((s) => {
+      const rec = s.style_recommendations[index] ?? s.active_style;
+      return {
+        active_style: rec,
+        confirmed_style_source: 'recommendation',
+        confirmed_style_id: rec ? rec.name : null,
+      };
+    }),
   applyLayoutRecommendation: (index) =>
-    set((s) => ({
-      active_layout: s.layout_recommendations[index] ?? s.active_layout,
-      dirty_layout_selection: false,
-    })),
+    set((s) => {
+      const rec = s.layout_recommendations[index] ?? s.active_layout;
+      return {
+        active_layout: rec,
+        confirmed_layout_source: 'recommendation',
+        confirmed_layout_id: rec ? rec.name : null,
+      };
+    }),
 
   // AI 新推荐到达：不改 dirty 字段；推荐列表永远更新
   ingestFromDesignJson: (json) =>
@@ -90,16 +112,17 @@ export const useDesignStore = create<DesignState>((set) => ({
       copy_segments:  s.dirty_copy            ? s.copy_segments: json.copy.segments,
       visual_description_en: json.visual.description_en,   // 不受 dirty 控制
       layout_description:    json.layout.description,       // 不受 dirty 控制
-      active_style:   s.dirty_style_selection ? s.active_style  : (json.recommendations.styles[0] ?? null),
-      active_layout:  s.dirty_layout_selection? s.active_layout : (json.recommendations.layouts[0] ?? null),
+      active_style:   (s.confirmed_style_source && s.confirmed_style_source !== 'agent_input') ? s.active_style  : (json.recommendations.styles[0] ?? null),
+      active_layout:  (s.confirmed_layout_source && s.confirmed_layout_source !== 'agent_input') ? s.active_layout : (json.recommendations.layouts[0] ?? null),
       // 推荐列表永远更新（供 Panel 展示所有推荐选项）
       style_recommendations:  json.recommendations.styles,
       layout_recommendations: json.recommendations.layouts,
     })),
 
   // 新 clarifying 轮次 → 重置脏标记（之前编辑语境已失效）
+  // 注意：不再重置 confirmed_style_source 和 confirmed_layout_source，让确认态得以保留
   resetAllDirty: () =>
-    set({ dirty_copy: false, dirty_style_selection: false, dirty_layout_selection: false }),
+    set({ dirty_copy: false }),
 
   // 老会话兜底
   initFromLegacy: (opts) =>

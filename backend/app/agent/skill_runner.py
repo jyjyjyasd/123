@@ -102,6 +102,12 @@ async def collect_material_reference_file_ids(
         if isinstance(material, dict) and material_type in include_types:
             ordered_urls.append(material.get("url"))
 
+    if "style" in include_types and stream_b.get("style_reference_image"):
+        ordered_urls.append(stream_b.get("style_reference_image"))
+
+    if "layout" in include_types and stream_b.get("layout_reference_image"):
+        ordered_urls.append(stream_b.get("layout_reference_image"))
+
     seen: set[str] = set()
     file_ids: list[str] = []
     for url in ordered_urls:
@@ -124,7 +130,7 @@ async def collect_generation_reference_file_ids(
     db: AsyncSession,
 ) -> list[str]:
     # 主体物和“其他素材”都进入模型参考图链路，并触发图生图语义。
-    # Logo 素材不参与这一层分流，它只走独立的前端/导出叠加层。
+    # Logo 素材、风格、排版 不参与这一层分流，它们仅做LLM提示词通道或独立的前端合成层。
     return await collect_material_reference_file_ids(
         s,
         include_types={"subject", "other"},
@@ -198,12 +204,40 @@ async def collect_extend_reference_file_ids(
                     seen.add(primary_output_id)
                     file_ids.append(primary_output_id)
 
-    for file_id in await collect_generation_reference_file_ids(s, db=db):
+    for file_id in await collect_material_reference_file_ids(s, include_types={"subject", "other"}, db=db):
         if file_id not in seen:
             seen.add(file_id)
             file_ids.append(file_id)
 
     return file_ids[:5]
+
+
+def get_subject_description(s: AgentSession) -> str | None:
+    """根据设计数据 (design_json) 或用户首次发言生成会话描述名称。"""
+    # 1. 尝试从 design_json 中提取标题文案
+    design = _load_json(s.design_json)
+    if isinstance(design, dict) and "copy" in design:
+        copy_list = design["copy"]
+        if isinstance(copy_list, list):
+            for seg in copy_list:
+                if isinstance(seg, dict) and seg.get("role") == "headline":
+                    text = str(seg.get("text") or "").strip()
+                    if text:
+                        return text[:15] + "..." if len(text) > 15 else text
+
+    # 2. 尝试从 clarify_messages 获取第一个用户的发言作为备用
+    msgs = _load_json(s.clarify_messages, [])
+    if isinstance(msgs, list):
+        for m in msgs:
+            if isinstance(m, dict) and m.get("role") == "user":
+                content = str(m.get("content") or "").strip()
+                if content:
+                    # 过滤换行符、首尾空白，并截取第一行
+                    first_line = content.split("\n")[0].strip()
+                    first_line = first_line.lstrip("#* \t")
+                    return first_line[:12] + "..." if len(first_line) > 12 else first_line
+
+    return None
 
 
 def session_to_dict(s: AgentSession) -> dict:
@@ -225,6 +259,7 @@ def session_to_dict(s: AgentSession) -> dict:
         "archived_images": _load_json(s.archived_images, []),
         "error_message": s.error_message,
         "design_json": _load_json(s.design_json),
+        "subject_description": get_subject_description(s),
         "created_at": s.created_at.isoformat() if s.created_at else None,
         "updated_at": s.updated_at.isoformat() if s.updated_at else None,
     }
@@ -763,7 +798,7 @@ async def stream_clarify(
         user_id=s.user_id,
         db=db,
     )
-    include_reference_images = bool(style_file or layout_file or subject_file) or not has_prior_assistant
+    include_reference_images = bool(resolved_style_file or resolved_layout_file or resolved_subject_file)
 
     full_text = ""
     structured: dict | None = None
@@ -835,9 +870,11 @@ async def stream_clarify(
                 s.stream_a = _dump_json(existing_a)
             else:
                 existing_a = _load_json(s.stream_a, {})
+                # prompting 阶段受保护的字段：用户已确认的文案/排版数据不允许 LLM 覆写
+                _PROTECTED_A_KEYS = {"copy", "layout_notes", "layout_prompt"}
                 for k, v in sa.items():
-                    if k == "copy" and (new_status == "prompting" or s.status == "prompting") and existing_a.get("copy"):
-                        # 强制忽略 Stage 2 隐式输出中的 copy，避免覆写已确认的文案快照
+                    if k in _PROTECTED_A_KEYS and (new_status == "prompting" or s.status == "prompting") and existing_a.get(k):
+                        # 强制忽略 Stage 2 隐式输出中的已确认字段，避免覆写用户通过 Tag / 自定义选择的排版与文案快照
                         continue
                     if v is not None and existing_a.get(k) != v:
                         existing_a[k] = v
@@ -851,11 +888,16 @@ async def stream_clarify(
                 pass
             else:
                 existing_b = _load_json(s.stream_b, {})
+                # prompting 阶段受保护的字段：用户已确认的视觉描述不允许 LLM 覆写
+                _PROTECTED_B_KEYS = {"visual_description"}
                 for k, v in sb.items():
                     if is_refresh_styles:
                         if k != "style_recommendations":
                             # 刷新风格时，只更新 style_recommendations，不修改其它视觉属性
                             continue
+                    if k in _PROTECTED_B_KEYS and (new_status == "prompting" or s.status == "prompting") and existing_b.get(k):
+                        # 强制忽略 Stage 2 隐式输出中的已确认视觉描述，避免覆写用户通过 Tag 选择的风格快照
+                        continue
                     if v is not None and existing_b.get(k) != v:
                         existing_b[k] = v
                         if k != "style_recommendations":

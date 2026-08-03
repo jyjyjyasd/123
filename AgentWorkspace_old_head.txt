@@ -1,0 +1,200 @@
+// features/agent/components/AgentWorkspace.tsx
+
+
+
+
+
+
+
+// Agent 工作区主组件：左侧对话 + 右侧画布的分栏布局
+
+
+
+
+
+
+
+// 在 workspace.tsx 的 Tab 切换中作为独立工作区渲染
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+import { useEffect, useRef, useState } from "react";
+
+
+
+
+
+
+
+import type { CSSProperties } from "react";
+
+
+
+
+
+
+
+import { ChatBubble } from "./ChatBubble";
+
+
+
+
+
+
+
+import { CanvasArea } from "./CanvasArea";
+
+
+
+
+
+
+
+import { ExtendModal } from "./ExtendModal";
+
+
+
+
+
+
+
+import { ResolutionExtendModal } from "./ResolutionExtendModal";
+import { StyleTagPopover } from "./StyleTagPopover";
+import type { PresetStyleTag } from "../data/preset-style-tags";
+import { LayoutTagPopover } from "./LayoutTagPopover";
+import type { PresetLayoutTag } from "../data/preset-layout-tags";
+
+
+
+
+
+
+
+import { useAgentSession } from "../hooks";
+
+
+
+
+
+
+
+import { RotateCcw, RotateCw, Trash2 } from "lucide-react";
+
+
+
+
+
+
+
+import type { ClarifyMessage } from "../types";
+
+
+
+
+
+
+
+import { REFERENCE_INPUT_ACCEPT } from "@/lib/reference-files";
+
+
+
+
+
+
+
+import { refreshCopy } from "../api";
+
+
+
+
+
+
+
+import {
+
+
+
+
+
+
+
+  extractStyleRecommendations,
+
+
+
+
+
+
+
+  extractLayoutRecommendations,
+
+
+
+
+
+
+
+  parseSectionedMessage,
+
+
+
+
+
+
+
+} from "../section-parser";
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+const DEFAULT_STYLE_RECS = [
+
+
+
+
+
+
+
+  {
+
+
+
+
+
+
+
+    index: 1,
+
+
+
+
+
+
+
+    name: "极简日系",
+
+
+

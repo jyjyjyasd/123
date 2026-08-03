@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import type { AgentSession, ExtendedImage } from "../types";
 
@@ -39,9 +39,13 @@ export const ResolutionExtendModal = forwardRef<ResolutionExtendModalHandle, Res
     },
     ref
   ) => {
+    // ── 所有 hooks 必须在此区域调用，保证每次渲染调用次数一致 ──
     const [isOpen, setIsOpen] = useState(false);
     const [internalBaseImageUrl, setInternalBaseImageUrl] = useState<string | undefined>();
     const [internalBaseRatio, setInternalBaseRatio] = useState<string | undefined>();
+    const [selected, setSelected] = useState<Set<string>>(new Set());
+    const [isLoading, setIsLoading] = useState(false);
+    const prevIsOpenRef = useRef(false);
 
     useImperativeHandle(ref, () => ({
       open(url?: string, ratio?: string) {
@@ -57,7 +61,7 @@ export const ResolutionExtendModal = forwardRef<ResolutionExtendModalHandle, Res
     const baseImageUrl = internalBaseImageUrl ?? propBaseImageUrl;
     const currentRatio = internalBaseRatio ?? propCurrentRatio;
 
-    if (!isOpen) return null;
+    // ── 派生数据：弹窗关闭时也计算，开销可忽略 ──
 
     const handleClose = () => {
       setIsOpen(false);
@@ -161,10 +165,16 @@ export const ResolutionExtendModal = forwardRef<ResolutionExtendModalHandle, Res
     ? [currentRatio]
     : list.filter((r) => generatedRatiosInGroup.has(r));
 
-  const [selected, setSelected] = useState<Set<string>>(new Set(defaultSelected));
+  // 弹窗打开时重置选中项
+  useEffect(() => {
+    if (isOpen && !prevIsOpenRef.current) {
+      setSelected(new Set(defaultSelected));
+    }
+    prevIsOpenRef.current = isOpen;
+  }, [isOpen, defaultSelected.join(",")]);
+
   const activeTasks = tasks.filter((task) => task.status && task.status !== "completed");
   const runningTasks = tasks.filter((task) => task.status && task.status !== "completed" && task.status !== "failed");
-  const [isLoading, setIsLoading] = useState(false);
 
   const toggleRatio = (ratio: string) => {
     setSelected((prev) => {
@@ -188,6 +198,8 @@ export const ResolutionExtendModal = forwardRef<ResolutionExtendModalHandle, Res
     }
   };
 
+  // ── 弹窗关闭时返回 null，不渲染任何 DOM ──
+  if (!isOpen) return null;
 
   return (
     <div
@@ -383,4 +395,3 @@ export const ResolutionExtendModal = forwardRef<ResolutionExtendModalHandle, Res
   );
 }
 );
-

@@ -339,6 +339,7 @@ class AgentSessionOut(BaseModel):
     archived_images: list[AgentVersionGroup] = []
     error_message: Optional[str] = None
     design_json: Optional[dict] = None
+    subject_description: Optional[str] = None
     created_at: datetime
     updated_at: datetime
 

@@ -285,7 +285,16 @@ def build_system_prompt(
 4. [[SECTION:missing]] 区：正常展示缺失的需要用户对齐的信息。
 
 【第二阶段 — 最终方案定稿（status: "prompting"，用户明确表示确认/开始生成时）】
-用户已确认，这是最终的定稿方案，需要在一轮回复中展示完整的编译成果。回复要求如下：
+用户已确认，这是最终的定稿方案，需要在一轮回复中展示完整的编译成果。
+
+【⚠️ 排版/视觉定稿透传规则（绝对最高优先级）】
+在 prompting 阶段，如果【当前已对齐的海报配置快照】中：
+- `stream_a.layout_notes` 已有具体排版描述（非空且非"暂无具体排版要求"），则你在结构化 JSON 的 `stream_a.layout_notes` 中必须 100% 原样透传该值，禁止擅自改写、重新生成或简化。
+- `stream_a.layout_prompt` 如有英文排版提示词，同样必须原样透传。
+- `stream_b.visual_description` 已有具体视觉描述（非空且非"not provided"），则你在结构化 JSON 的 `stream_b.visual_description` 中必须 100% 原样透传该值。
+上述规则确保用户通过 Tag 或自定义输入确认的排版/风格方案不会被覆盖。
+
+回复要求如下：
 1. [[SECTION:visual]]（主视觉风格）区：
    - “已知”中必须展示对最终英文生图提示词（stream_b.visual_description）的一句话极简中文摘要（可在括号中附带简短的英文核心词，如：未来感国潮跑鞋 (Cinematic cyber runners)），必须以中文为主体展示，确保核心的中国用户能完全看懂画面风格主旨，禁止只输出纯英文。
 2. [[SECTION:poster_text]]（印刷文案信息）区：
@@ -325,22 +334,15 @@ def build_system_prompt(
 （缺失项，一条一行；无缺失则写"可直接进入绘制"）
 [[/SECTION]]
 
-四、参考图角色
-- style_reference_image：只用于视觉风格、色彩、氛围、光影分析
-- layout_reference_image：只用于版式结构、文字层级、留白、对齐分析
+四、参考图角色与提取要求
+- style_reference_image：分析整体色彩氛围、流派质感，切勿当作版式构图或主体物参考；输出 stream_b.visual_description 时大概 50 字英文/短语即可（精炼涵盖主配色、调性与光影质感）。
+- layout_reference_image：用作分析构图网格、层级与留白，文字排版位置，切勿当作视觉色彩或主体物参考；输出 stream_a.layout_prompt 时大概 80 字英文/短语即可（精炼描述构图空间、文字排版位置与留白结构）。
 - subject_reference_image：只用于主体物、产品、人物识别。如果该图片是由当前海报底图加上红色画笔线条、红圈或红色标注箭头合成的，这代表用户正在进行“海报圈画修改”。你必须将红色标注区域识别为用户的编辑修改范围定位。在为 apimart 生图模型生成 revised_prompt 时，务必将用户的修改意图应用在红色标记对应的区域，并在提示词中要求模型抹除所有红色标记线条本身，输出一张干净修改后的海报，同时保留未画圈区域的所有原有设计细节与布局。
 不要混淆三种图片用途。
 
 五、视觉描述要求（stream_b.visual_description）
-当用户提供了风格参考图时，visual_description 必须包含以下所有维度的精确描述，禁止笼统带过：
-1. 色彩方案：列出主色、辅色、点缀色的具体描述（如 warm amber gold / muted sage green / deep charcoal black），必须精确到具体颜色名称
-2. 色调倾向：冷色调 / 暖色调 / 中性色调，并说明明度（高调/中调/低调）
-3. 光影风格：具体光线方向 and 质感（如 soft diffused overhead light / dramatic side rim lighting / golden hour backlight）
-4. 材质质感：主要表面质感（如 matte frosted glass / brushed metal / grainy paper / glossy acrylic）
-5. 审美流派 and 氛围：明确标注风格流派名称 and 情绪氛围（如 Swiss International minimalist editorial / acid graphics cyberpunk / wabi-sabi organic texture）
-6. 空间与构图倾向：负空间密度、元素密度、对称性
-
-如果参考图缺失，按原有规则标注 not provided，禁止编造。以上维度无论参考图有无，在 visual_description 中未涉及的维度一律标注 not provided。
+当用户提供了风格参考图时，visual_description 必须精炼总结整体色彩氛围、光影质感与流派，控制在大概 50 字英文/短语即可，禁止冗长描述与开场白废词。
+如果参考图缺失，按原有规则标注 not provided，禁止编造。
 
 六、结构化输出（两个阶段使用不同 JSON 模板，必须区分）
 
@@ -462,8 +464,8 @@ async def stream_chat(
     # 注入当前 session 的参数快照作为上下文，帮助模型对齐前次选择与已同步数据
     if stream_a or stream_b:
         snapshot_data = {
-            "stream_a": {k: v for k, v in (stream_a or {}).items() if k not in ["layout_recommendations", "layout_prompt", "pdf_document_text"]},
-            "stream_b": {k: v for k, v in (stream_b or {}).items() if k not in ["style_recommendations", "visual_description"]},
+            "stream_a": {k: v for k, v in (stream_a or {}).items() if k not in ["layout_recommendations", "pdf_document_text"]},
+            "stream_b": {k: v for k, v in (stream_b or {}).items() if k not in ["style_recommendations"]},
         }
         messages.append({
             "role": "system",
@@ -662,13 +664,12 @@ async def audit_user_intent(user_input: str, has_files: bool = False) -> dict:
         "1. 【海报定位/应用场景】（是什么海报，在哪里展示，例如：天猫详情页、微信朋友圈、线下门店展架、小红书种草等）。\n"
         "2. 【核心作用/目标】（用来干什么，商业目标是什么，例如：大促吸睛引流、节日情感问候、新品奢华发布、促销爆款转化等）。\n\n"
         "【审计放行与拦截判定规则】：\n"
-        "- 放行（rich = true）：用户提供的信息已足够具体（具有较完善的设计物料或明确指示），不应通过追问打断用户。符合以下任意条件之一，即可判定为放行：\n"
-        "  1. 用户已上传了参考图片或设计素材（上下文提示 `has_files = true`）。\n"
-        "  2. 用户在初始输入中提供了较完善的素材或具体要求，例如：包含了具体的文案内容（如具体的标题、Slogan，或用 ` | ` 分隔的多段文案）；或者包含了明确的风格名称与风格偏好（如“酸性赛博风”、“极简日系风格”）；或者包含了具体的排版排布要求。\n"
-        "  3. 用户的初始需求文本同时明确包含海报定位（在哪里用）与核心作用（用来干什么）。\n"
+        "- 放行（rich = true）：用户提供的信息已足够具体，不应通过追问打断用户。符合以下任意条件之一，即可判定为放行：\n"
+        "  1. 用户在初始输入中提供了较完善的素材或具体要求，例如：包含了具体的文案内容（如具体的标题、Slogan，或用 ` | ` 分隔的多段文案）；或者包含了明确的风格名称与风格偏好（如“酸性赛博风”、“极简日系风格”）。\n"
+        "  2. 用户的初始需求文本同时明确包含海报定位（在哪里用）与核心作用（用来干什么）。\n"
         "  * 例如：“做一张端午节海报，风格是极简日系风格，主标题写‘粽享丝滑’” -> 放行（包含明确的风格和文案）\n"
         "  * 例如：“设计一张天猫旗舰店端午大促引流横版Banner” -> 放行（包含明确的定位和作用）\n"
-        "- 拦截（rich = false）：仅当用户没有上传任何参考素材（`has_files = false`），且初始需求非常模糊空泛（如仅输入“做个端午节海报”、“做一张猫粮的图”、“做一个新品推广图”），既没有包含明确的定位和作用，也没有包含任何文案、风格、排版细节时，才判定为拦截。\n\n"
+        "- 拦截（rich = false）：用户初始需求模糊空泛（如仅输入“做个端午节海报”、“做一张猫粮的图”、“做一个新品推广图”），既没有包含明确的定位和作用，也没有包含任何文案、风格细节时，才判定为拦截。\n\n"
         "【拦截话术与选项生成（当 rich = false 时）】：\n"
         "1. 以视觉设计总监语气生成一段专业前置追问话术（中文），语气专业、温和、拟人化且具有商业洞察力，委婉引导用户补充定位或核心作用。\n"
         "2. 生成 4 个轻量级快捷选择（Quick Replies）气泡选项，每个选项代表一种可能的“海报定位 + 核心作用”组合。例如输入为“端午节”，选项可以是：\n"
@@ -871,5 +872,62 @@ async def rewrite_prompt_for_edit(
             if new_prompt.endswith("```"):
                 new_prompt = new_prompt[:-3]
         return new_prompt.strip()
+
+
+async def describe_reference_image(file_path: Path) -> str:
+    """
+    针对 1.5 其他类型图片，使用大模型的 Vision 能力生成该图片的文字描述，
+    以便在生图时作为文字控制条件。
+    """
+    system_prompt = (
+        "你是一个专业的 AI 视觉分析助手。用户上传了一张参考图片（通常是主体物、装饰物、或某种特定视觉元素）。"
+        "请用一两句话简明扼要地描述这张图片的内容，以便将其转换成文本形式提供给后续的海报设计生图模型。\n"
+        "描述应当客观、清晰，如“这是一个红色的气球，适合作为背景装饰”或“画面中是一只正在奔跑的橘猫”。"
+    )
+    
+    url = _file_to_base64_data_url(file_path)
+    if not url:
+        return "无法读取该图片文件"
+        
+    user_content = [
+        {"type": "text", "text": "请简短描述这张图片的内容与可能的海报设计用途："},
+        {"type": "image_url", "image_url": {"url": url}}
+    ]
+    
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_content}
+    ]
+    
+    settings = get_settings()
+    headers = {}
+    if settings.effective_agent_llm_key:
+        headers["Authorization"] = f"Bearer {settings.effective_agent_llm_key}"
+        
+    payload = {
+        "model": settings.agent_llm_model,
+        "messages": messages,
+        "temperature": 0.3,
+        "stream": False,
+    }
+    
+    api_url = f"{settings.agent_llm_base.rstrip('/')}/chat/completions"
+    logger.info("llm_describe_reference_image url=%s model=%s file=%s", api_url, settings.agent_llm_model, file_path.name)
+    
+    async with httpx.AsyncClient(timeout=180.0) as client:
+        try:
+            response = await client.post(api_url, headers=headers, json=payload)
+            if response.status_code != 200:
+                err_text = await response.aread()
+                logger.error("llm_describe_image_failed status=%d response=%s", response.status_code, err_text.decode(errors="ignore"))
+                return "图片内容描述生成失败"
+                
+            res_json = response.json()
+            description = res_json["choices"][0]["message"]["content"].strip()
+            return description
+        except Exception as e:
+            logger.error("llm_describe_image_exception err=%s", e)
+            return "图片内容描述生成异常"
+
 
 
