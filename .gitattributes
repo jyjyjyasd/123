@@ -1,0 +1,7 @@
+# 统一 LF 行尾，避免 CRLF 噪音 diff
+* text=auto eol=lf
+
+# 保持原样（内容检测异常，避免误转）
+backend/test_endpoint_out.txt -text
+backend/test_extend_out.txt -text
+docs/任务-AgentWorkspace数据层重建.md -text
