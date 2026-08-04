@@ -873,7 +873,8 @@ async def stream_clarify(
                 # prompting 阶段受保护的字段：用户已确认的文案/排版数据不允许 LLM 覆写
                 _PROTECTED_A_KEYS = {"copy", "layout_notes", "layout_prompt"}
                 for k, v in sa.items():
-                    if k in _PROTECTED_A_KEYS and (new_status == "prompting" or s.status == "prompting") and existing_a.get(k):
+                    is_layout_not_provided = existing_a.get(k) in [None, "", "暂无具体排版要求", "not provided", "not-provided"]
+                    if k in _PROTECTED_A_KEYS and (new_status == "prompting" or s.status == "prompting") and not is_layout_not_provided:
                         # 强制忽略 Stage 2 隐式输出中的已确认字段，避免覆写用户通过 Tag / 自定义选择的排版与文案快照
                         continue
                     if v is not None and existing_a.get(k) != v:
@@ -895,7 +896,8 @@ async def stream_clarify(
                         if k != "style_recommendations":
                             # 刷新风格时，只更新 style_recommendations，不修改其它视觉属性
                             continue
-                    if k in _PROTECTED_B_KEYS and (new_status == "prompting" or s.status == "prompting") and existing_b.get(k):
+                    is_style_not_provided = existing_b.get(k) in [None, "", "not provided", "not-provided"]
+                    if k in _PROTECTED_B_KEYS and (new_status == "prompting" or s.status == "prompting") and not is_style_not_provided:
                         # 强制忽略 Stage 2 隐式输出中的已确认视觉描述，避免覆写用户通过 Tag 选择的风格快照
                         continue
                     if v is not None and existing_b.get(k) != v:
@@ -913,6 +915,36 @@ async def stream_clarify(
             s.extended_images = None
 
     s.status = new_status
+
+    # 首次消息：从用户输入关键词推断画布比例和清晰度
+    # 仅在本轮之前没有 assistant 消息时触发，避免覆盖用户后续手动选择
+    if not has_prior_assistant:
+        _RATIO_KEYWORDS: list[tuple[list[str], str]] = [
+            (["9:32", "详情页", "长图"], "9:32"),
+            (["9:16", "竖版海报", "手机壁纸", "手机屏", "竖屏", "竖版", "海报"], "9:16"),
+            (["16:9", "宽屏", "横屏"], "16:9"),
+            (["3:4", "小红书"], "3:4"),
+            (["4:3", "PPT", "ppt", "幻灯片"], "4:3"),
+            (["2:3", "杂志"], "2:3"),
+            (["3:2", "摄影"], "3:2"),
+            (["1:1", "方图", "方形", "正方形"], "1:1"),
+        ]
+        _RESOLUTION_KEYWORDS: list[tuple[list[str], str]] = [
+            (["4k", "4K", "超清"], "4k"),
+            (["2k", "2K"], "2k"),
+            (["1k", "1K"], "1k"),
+        ]
+        for keywords, ratio in _RATIO_KEYWORDS:
+            if any(kw in user_message for kw in keywords):
+                if ratio != s.aspect_ratio:
+                    s.aspect_ratio = ratio
+                break
+        for keywords, res in _RESOLUTION_KEYWORDS:
+            if any(kw in user_message for kw in keywords):
+                if res != s.resolution:
+                    s.resolution = res
+                break
+
     s.clarify_messages = _dump_json(messages)
     s.updated_at = datetime.now(timezone.utc)
 

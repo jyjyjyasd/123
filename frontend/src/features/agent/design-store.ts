@@ -112,8 +112,8 @@ export const useDesignStore = create<DesignState>((set) => ({
       copy_segments:  s.dirty_copy            ? s.copy_segments: json.copy.segments,
       visual_description_en: json.visual.description_en,   // 不受 dirty 控制
       layout_description:    json.layout.description,       // 不受 dirty 控制
-      active_style:   (s.confirmed_style_source && s.confirmed_style_source !== 'agent_input') ? s.active_style  : (json.recommendations.styles[0] ?? null),
-      active_layout:  (s.confirmed_layout_source && s.confirmed_layout_source !== 'agent_input') ? s.active_layout : (json.recommendations.layouts[0] ?? null),
+      active_style:   s.confirmed_style_source ? s.active_style  : (json.recommendations.styles[0] ?? null),
+      active_layout:  s.confirmed_layout_source ? s.active_layout : (json.recommendations.layouts[0] ?? null),
       // 推荐列表永远更新（供 Panel 展示所有推荐选项）
       style_recommendations:  json.recommendations.styles,
       layout_recommendations: json.recommendations.layouts,

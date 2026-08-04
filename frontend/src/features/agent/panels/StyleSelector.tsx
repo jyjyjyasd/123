@@ -68,12 +68,16 @@ export function StyleSelector({
   const REF_INDICATOR = "参考图片";
   const rawVal = hasStyleRef ? REF_INDICATOR : (visualDescription || "");
   const friendlyVal = hasStyleRef ? REF_INDICATOR : resolveFriendlyStyleName(rawVal);
-  const knownSummary = knownStyleSummary.trim();
+  const rawSummary = knownStyleSummary.trim();
+  // 过滤系统自动生成的尾部英文括号描述，仅保留中文摘要
+  const knownSummary = rawSummary.replace(/\s*\([\x00-\x7F]+\)$/g, "").trim();
   const noStyleKeywords = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无明确指定视觉风格"];
   const isNoStyleValue = (v: string) =>
     !v.trim() || noStyleKeywords.some((kw) => v.trim().toLowerCase().includes(kw));
-  // 未选中任何来源时，优先展示「已知」中文摘要（用户可读），英文 visual_description 仅作最后兜底
-  const fallbackVal = knownSummary || friendlyVal;
+  // 判断是否为用户自行输入（包括 agent 整理的输入）
+  const isUserInput = confirmedSource === 'custom' || confirmedSource === 'agent_input';
+  // 未选中任何来源时，优先展示「已知」中文摘要，若为用户输入则直接展示完整内容
+  const fallbackVal = knownSummary || (isUserInput ? rawVal : friendlyVal);
   const isNoStyle = isNoStyleValue(fallbackVal);
   
   // 选中任意来源（custom/recommendation/tag/agent_input）后，统一展示 activeStyle.name（中文风格名），
@@ -123,7 +127,7 @@ export function StyleSelector({
                 const val = styleTextareaRef.current?.value.trim() || styleVal;
                 const item: StyleRecommendation = {
                   index: 99,
-                  name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                  name: val,
                   name_en: val,
                   visual_description: val,
                 };
@@ -175,7 +179,7 @@ export function StyleSelector({
                     const val = e.target.value.trim() || styleVal;
                     const item: StyleRecommendation = {
                       index: 99,
-                      name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                      name: val,
                       name_en: val,
                       visual_description: val,
                     };
@@ -190,7 +194,7 @@ export function StyleSelector({
                   if (val && !isUntouchedKnownSummary && (val !== styleVal || confirmedSource !== 'custom')) {
                     const item: StyleRecommendation = {
                       index: 99,
-                      name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                      name: val,
                       name_en: val,
                       visual_description: val,
                     };
@@ -206,7 +210,7 @@ export function StyleSelector({
                     if (val && !isUntouchedKnownSummary) {
                       const item: StyleRecommendation = {
                         index: 99,
-                        name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                        name: val,
                         name_en: val,
                         visual_description: val,
                       };

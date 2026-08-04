@@ -52,8 +52,11 @@ export function LayoutSelector({
   }
   candidatesList.push(...layoutRecommendations);
 
+  const isUserInput = confirmedSource === 'custom' || confirmedSource === 'agent_input';
+  const fallbackLayout = (isUserInput && activeLayout?.description) || layoutDescription || "";
+
   const REF_INDICATOR = "参考图片";
-  const rawLayoutVal = hasLayoutRef ? REF_INDICATOR : (layoutDescription || "");
+  const rawLayoutVal = hasLayoutRef ? REF_INDICATOR : (fallbackLayout || "");
   const trimmedVal = rawLayoutVal.trim();
   
   // 选中任意来源（custom/recommendation/tag/agent_input）后，统一展示 activeLayout.name（中文排版名），
@@ -94,7 +97,7 @@ export function LayoutSelector({
                 const val = layoutTextareaRef.current?.value.trim() || layoutVal;
                 const item: LayoutRecommendation = {
                   index: 99,
-                  name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                  name: val,
                   description: val,
                 };
                 onSelectLayout(item, 'custom');
@@ -138,7 +141,7 @@ export function LayoutSelector({
                     const val = e.target.value.trim() || layoutVal;
                     const item: LayoutRecommendation = {
                       index: 99,
-                      name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                      name: val,
                       description: val,
                     };
                     onSelectLayout(item, 'custom');
@@ -149,7 +152,7 @@ export function LayoutSelector({
                   if (val && (val !== layoutVal || confirmedSource !== 'custom')) {
                     const item: LayoutRecommendation = {
                       index: 99,
-                      name: val.length > 30 ? val.slice(0, 27) + "..." : val,
+                      name: val,
                       description: val,
                     };
                     onSelectLayout(item, 'custom');

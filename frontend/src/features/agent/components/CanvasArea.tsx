@@ -653,12 +653,24 @@ export function CanvasArea({
         </div>
       </div>
 
+      {/* 画布区域（工具栏 + 画布卡片） */}
+      <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 12 }}>
+        {isDrawingMode && (
+          <AnnotationToolbar
+            activeTool={activeTool}
+            onSelectTool={setActiveTool}
+            onClear={clearDrawing}
+          />
+        )}
+
       {/* 主画布卡片 */}
       <div
         className="no-scrollbar"
         style={{
           aspectRatio: (currentDisplayImage?.ratio || session.aspect_ratio) === "9:32" ? "9/16" : getRatioAspect(currentDisplayImage?.ratio || session.aspect_ratio),
           width: "auto",
+          flex: 1,
+          minWidth: 0,
           maxWidth: "100%",
           height: "calc(100vh - 360px)",
           minHeight: 280,
@@ -750,13 +762,6 @@ export function CanvasArea({
                   onTouchStart={startDrawing}
                   onTouchMove={draw}
                   onTouchEnd={stopDrawing}
-                />
-
-                {/* 顶端工具切换 HUD */}
-                <AnnotationToolbar
-                  activeTool={activeTool}
-                  onSelectTool={setActiveTool}
-                  onClear={clearDrawing}
                 />
 
                 {/* 浮动箭头标签 input */}
@@ -922,6 +927,7 @@ export function CanvasArea({
         ) : (
           <WaitingView />
         )}
+      </div>
       </div>
 
       {/* 满意度/操作动作栏 */}

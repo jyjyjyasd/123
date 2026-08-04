@@ -1,12 +1,18 @@
-// features/agent/use-design-sync.ts
-// 职责：监听 session 变化 → 同步到 DesignStore
-// clarifying 阶段不执行注入；prompting 或 review 阶段读 design_json 注入
-// 注意：后端可能一步从 clarifying 直接跳到 review（跳过 prompting），
-// 因此两个状态都需要触发注入，否则 Store 为空，推荐卡片不显示
-
 import { useEffect } from "react";
 import type { AgentSession } from "./types";
 import { useDesignStore } from "./design-store";
+import { extractKnownStyleSummary } from "./section-parser";
+
+function resolveFriendlyStyleName(raw: string): string {
+  if (!raw) return "";
+  const t = raw.trim();
+  if (t.length <= 40) return t;
+  if (t.includes(".")) {
+    const first = t.split(".")[0].trim();
+    if (first.length <= 60) return first;
+  }
+  return t.slice(0, 60) + "...";
+}
 
 export function useDesignSync(session: AgentSession | null) {
   const ingest = useDesignStore((s) => s.ingestFromDesignJson);
@@ -14,6 +20,37 @@ export function useDesignSync(session: AgentSession | null) {
 
   useEffect(() => {
     if (!session) return;
+
+    // 如果后端已有有效的风格或排版规划描述，但在 store 中尚未确认，初始化其来源为 'agent_input'
+    const storeState = useDesignStore.getState();
+    const knownStyleSummary = extractKnownStyleSummary(session.clarify_messages ?? []);
+
+    const styleDesc = session.stream_b?.visual_description;
+    const hasStyleDesc = styleDesc && styleDesc !== "not provided" && styleDesc !== "not-provided";
+    if (hasStyleDesc && storeState.confirmed_style_source === null) {
+      useDesignStore.setState({
+        confirmed_style_source: 'agent_input',
+        active_style: {
+          index: 99,
+          name: knownStyleSummary || resolveFriendlyStyleName(styleDesc),
+          name_en: "",
+          visual_description: styleDesc,
+        }
+      });
+    }
+
+    const layoutDesc = session.stream_a?.layout_notes;
+    const hasLayoutDesc = layoutDesc && layoutDesc !== "暂无具体排版要求";
+    if (hasLayoutDesc && storeState.confirmed_layout_source === null) {
+      useDesignStore.setState({
+        confirmed_layout_source: 'agent_input',
+        active_layout: {
+          index: 99,
+          name: layoutDesc,
+          description: layoutDesc,
+        }
+      });
+    }
 
     const shouldIngest = session.status === "prompting" || session.status === "review";
 
@@ -38,6 +75,8 @@ export function useDesignSync(session: AgentSession | null) {
       initFromLegacy({
         styleRecs: session.stream_b?.style_recommendations ?? [],
         layoutRecs: session.stream_a?.layout_recommendations ?? [],
+        ratio: session.aspect_ratio,
+        resolution: session.resolution,
       });
     }
   }, [
@@ -47,5 +86,8 @@ export function useDesignSync(session: AgentSession | null) {
     session?.stream_a?.copy,   // 老会话兜底依赖
     session?.stream_b?.style_recommendations,
     session?.stream_a?.layout_recommendations,
+    session?.clarify_messages,
+    session?.stream_b?.visual_description,
+    session?.stream_a?.layout_notes,
   ]);
 }
