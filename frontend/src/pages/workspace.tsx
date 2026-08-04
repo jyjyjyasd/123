@@ -195,7 +195,6 @@ function QuickGeneratePanel() {
                 <Sparkles size={48} strokeWidth={1.5} className="animate-pulse" style={{ color: "#9a713b" }} />
               </div>
               <div>
-                <h3 className="text-base font-bold text-text-primary mb-1">⚡ 快速生成工作区</h3>
                 <p className="text-xs text-text-secondary max-w-sm leading-relaxed">
                   在下方输入提示词并点击生成。您的海报将呈现在这里，生成历史记录请通过顶部的历史按键查看。
                 </p>

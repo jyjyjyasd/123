@@ -2,7 +2,7 @@
 // Agent 工作区主组件：左侧对话 + 右侧画布的分栏布局
 // 在 workspace.tsx 的 Tab 切换中作为独立工作区渲染
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ClarifyPanel } from "../panels/ClarifyPanel";
 import { StyleSelector } from "../panels/StyleSelector";
 import { LayoutSelector } from "../panels/LayoutSelector";
@@ -17,7 +17,7 @@ import { useAgentSession } from "../hooks";
 import { useDesignStore } from "../design-store";
 import { useDesignSync } from "../use-design-sync";
 import { REFERENCE_INPUT_ACCEPT } from "../../../lib/reference-files";
-import { parseSectionedMessage } from "../section-parser";
+import { extractKnownStyleSummary, parseSectionedMessage } from "../section-parser";
 import { refreshCopy } from "../api";
 
 export function AgentWorkspace() {
@@ -71,6 +71,12 @@ export function AgentWorkspace() {
   
   const chatEndRef = useRef<HTMLDivElement>(null);
 
+  // 未选中任何推荐时，「当前风格」优先展示最新一条 assistant 消息「已知：」的中文摘要
+  const knownStyleSummary = useMemo(
+    () => extractKnownStyleSummary(session?.clarify_messages ?? []),
+    [session?.clarify_messages]
+  );
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (materialMenuRef.current && !materialMenuRef.current.contains(event.target as Node)) {
@@ -80,6 +86,18 @@ export function AgentWorkspace() {
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // 顶层导航广播 "pf:agent-history" / "pf:agent-newchat" 时，工作区响应打开历史 / 新建对话
+  useEffect(() => {
+    const handleTriggerHistory = () => setShowSessionHistory(true);
+    const handleTriggerNew = () => handleNewChat();
+    window.addEventListener("pf:agent-history", handleTriggerHistory);
+    window.addEventListener("pf:agent-newchat", handleTriggerNew);
+    return () => {
+      window.removeEventListener("pf:agent-history", handleTriggerHistory);
+      window.removeEventListener("pf:agent-newchat", handleTriggerNew);
     };
   }, []);
 
@@ -249,19 +267,6 @@ export function AgentWorkspace() {
           }}
         />
 
-        {(() => {
-          useEffect(() => {
-            const handleTriggerHistory = () => setShowSessionHistory(true);
-            const handleTriggerNew = () => handleNewChat();
-            window.addEventListener("pf:agent-history", handleTriggerHistory);
-            window.addEventListener("pf:agent-newchat", handleTriggerNew);
-            return () => {
-              window.removeEventListener("pf:agent-history", handleTriggerHistory);
-              window.removeEventListener("pf:agent-newchat", handleTriggerNew);
-            };
-          }, []);
-          return null;
-        })()}
       </div>
 
       {/* ── 右侧：对话区 ─────────────────────────────────────── */}
@@ -327,6 +332,7 @@ export function AgentWorkspace() {
                     <StyleSelector
                       hasStyleRef={!!session?.stream_b?.style_reference_image}
                       visualDescription={session?.stream_b?.visual_description || ""}
+                      knownStyleSummary={knownStyleSummary}
                       onSelectStyle={async (rec, source) => {
                         ds_setActiveStyle(rec, source);
                         await updateParams({ stream_b: { visual_description: rec.visual_description } });

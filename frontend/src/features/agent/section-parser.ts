@@ -84,6 +84,30 @@ export function parseSectionedMessage(content: string): ParsedMessage {
 }
 
 /**
+ * 从 clarify 消息中提取最新一条 assistant 消息里「已知：」的风格摘要（中文）。
+ * 该字段是用户可直接阅读的中文风格描述；解析失败或没有该行时返回空串，由调用方决定兜底。
+ */
+export function extractKnownStyleSummary(
+  messages: ReadonlyArray<{ role: string; content?: string | null }>
+): string {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role !== "assistant" || !msg.content) continue;
+    const parsed = parseSectionedMessage(msg.content);
+    const visual = parsed.sections.find((s) => s.key === "visual");
+    if (!visual) continue;
+    const knownLine = visual.lines.find((l) => /^已知\s*[:：]/.test(l.trim()));
+    if (!knownLine) continue;
+    return knownLine
+      .replace(/^已知\s*[:：]\s*/, "")
+      .replace(/^\[已上传风格参考图\]\s*/, "")
+      .replace(/^最终采用\s*/, "")
+      .trim();
+  }
+  return "";
+}
+
+/**
  * 从 sections 中提取风格推荐（🎨 前缀行）。
  * 移植自 prd parseStyleRecommendations。
  */

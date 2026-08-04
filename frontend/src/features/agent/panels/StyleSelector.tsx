@@ -11,6 +11,7 @@ import type { StyleRecommendation } from "../types";
 interface StyleSelectorProps {
   hasStyleRef: boolean;
   visualDescription: string;
+  knownStyleSummary?: string;
   onSendMessage?: (msg: string) => Promise<void>;
   onSelectStyle: (rec: StyleRecommendation, source: 'custom' | 'recommendation') => void;
   onSelectTag: (tag: PresetStyleTag) => void;
@@ -30,6 +31,7 @@ function resolveFriendlyStyleName(raw: string): string {
 export function StyleSelector({
   hasStyleRef,
   visualDescription,
+  knownStyleSummary = "",
   onSendMessage,
   onSelectStyle,
   onSelectTag,
@@ -66,14 +68,20 @@ export function StyleSelector({
   const REF_INDICATOR = "参考图片";
   const rawVal = hasStyleRef ? REF_INDICATOR : (visualDescription || "");
   const friendlyVal = hasStyleRef ? REF_INDICATOR : resolveFriendlyStyleName(rawVal);
-  const isNoStyle = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无明确指定视觉风格"].some(kw => friendlyVal.trim().toLowerCase().includes(kw)) || !friendlyVal;
+  const knownSummary = knownStyleSummary.trim();
+  const noStyleKeywords = ["not-provided", "not provided", "未提供", "暂无", "无", "暂无明确指定视觉风格"];
+  const isNoStyleValue = (v: string) =>
+    !v.trim() || noStyleKeywords.some((kw) => v.trim().toLowerCase().includes(kw));
+  // 未选中任何来源时，优先展示「已知」中文摘要（用户可读），英文 visual_description 仅作最后兜底
+  const fallbackVal = knownSummary || friendlyVal;
+  const isNoStyle = isNoStyleValue(fallbackVal);
   
   // 选中任意来源（custom/recommendation/tag/agent_input）后，统一展示 activeStyle.name（中文风格名），
   // 不再回退到 visualDescription（后端 visual_description 为英文生图提示词，仅用于图像生成）。
   // 参考图片权重最高：上传参考图后输入框强制显示 "参考图片"，删除后才恢复原有逻辑。
   const styleVal = hasStyleRef
     ? REF_INDICATOR
-    : activeStyle ? activeStyle.name : (isNoStyle ? "" : friendlyVal);
+    : activeStyle ? activeStyle.name : (isNoStyle ? "" : fallbackVal);
 
   // 同步 textarea DOM value：解决 defaultValue 只在首次挂载生效、用户上传/删除参考图后文字不更新的 bug
   useEffect(() => {
@@ -176,7 +184,10 @@ export function StyleSelector({
                 }}
                 onBlur={(e) => {
                   const val = e.target.value.trim();
-                  if (val && (val !== styleVal || confirmedSource !== 'custom')) {
+                  // 未确认任何来源且内容未改动时（展示的是「已知」中文摘要），不写回 visual_description，
+                  // 避免把中文摘要覆盖到英文生图提示词上
+                  const isUntouchedKnownSummary = confirmedSource === null && val === knownSummary;
+                  if (val && !isUntouchedKnownSummary && (val !== styleVal || confirmedSource !== 'custom')) {
                     const item: StyleRecommendation = {
                       index: 99,
                       name: val.length > 30 ? val.slice(0, 27) + "..." : val,
@@ -190,7 +201,9 @@ export function StyleSelector({
                   if (e.key === "Enter" && !e.shiftKey) {
                     e.preventDefault();
                     const val = (e.target as HTMLTextAreaElement).value.trim();
-                    if (val) {
+                    // 与 onBlur 保持一致：未改动「已知」摘要时按 Enter 不提交，避免中文覆盖英文生图提示词
+                    const isUntouchedKnownSummary = confirmedSource === null && val === knownSummary;
+                    if (val && !isUntouchedKnownSummary) {
                       const item: StyleRecommendation = {
                         index: 99,
                         name: val.length > 30 ? val.slice(0, 27) + "..." : val,
