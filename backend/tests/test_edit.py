@@ -91,10 +91,12 @@ async def test_direct_edit_flow(client: AsyncClient, session) -> None:
     # Final prompt is updated
     assert updated_session.final_prompt == "Rewritten final prompt based on annotation"
     
-    # Old image is archived
-    archived = json.loads(updated_session.archived_images)
-    assert len(archived) == 1
-    assert archived[0]["batch_id"] == primary_gen.id
+    # Old image is NOT archived, but is in extended_images
+    assert updated_session.archived_images is None
+    extended = json.loads(updated_session.extended_images)
+    assert len(extended) == 1
+    assert extended[0]["generation_id"] == primary_gen.id
+    assert extended[0]["source"] == "primary"
 
     # Clarify messages are NOT modified (isolated)
     messages = json.loads(updated_session.clarify_messages)

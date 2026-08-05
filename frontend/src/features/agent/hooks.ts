@@ -14,6 +14,7 @@ import {
   uploadReferenceImage,
   listSessions as listSessionsApi,
   deleteSession as deleteSessionApi,
+  batchDeleteSessions as batchDeleteSessionsApi,
   editPoster,
 } from "./api";
 import type { AgentSession, SseFrame } from "./types";
@@ -55,6 +56,7 @@ export interface UseAgentSessionReturn {
   reset: () => void;
   listSessions: () => Promise<AgentSession[]>;
   deleteSession: (sessionId: string) => Promise<void>;
+  deleteSessions: (sessionIds: string[]) => Promise<void>;
   deleteExtendedImage: (target: { id?: string; url: string }) => Promise<void>;
   loadSession: (sessionId: string) => Promise<void>;
 }
@@ -532,6 +534,23 @@ export function useAgentSession(): UseAgentSessionReturn {
     [session, reset, initSession]
   );
 
+  const deleteSessions = useCallback(
+    async (sessionIds: string[]) => {
+      setError(null);
+      try {
+        await batchDeleteSessionsApi(sessionIds);
+        if (session && sessionIds.includes(session.id)) {
+          localStorage.removeItem("lastAgentSessionId");
+          reset();
+          await initSession();
+        }
+      } catch (e: any) {
+        setError(e.message ?? "批量删除会话失败");
+      }
+    },
+    [session, reset, initSession]
+  );
+
   const deleteExtendedImage = useCallback(
     async (target: { id?: string; url: string }) => {
       if (!session) return;
@@ -620,6 +639,7 @@ export function useAgentSession(): UseAgentSessionReturn {
     reset,
     listSessions,
     deleteSession,
+    deleteSessions,
     deleteExtendedImage,
     loadSession,
   };

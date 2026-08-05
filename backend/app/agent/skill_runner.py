@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any, AsyncIterator
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 
 from app.agent.prompt_compiler import build_final_prompt, NEGATIVE_PROMPT
 from app.config import get_settings
@@ -472,6 +472,23 @@ async def delete_session(session_id: str, *, user: User, db: AsyncSession) -> bo
     s.deleted_at = datetime.now(timezone.utc)
     await db.commit()
     return True
+
+
+async def delete_sessions(session_ids: list[str], *, user: User, db: AsyncSession) -> None:
+    """批量软删除会话。"""
+    if not session_ids:
+        return
+    stmt = (
+        update(AgentSession)
+        .where(
+            AgentSession.id.in_(session_ids),
+            AgentSession.user_id == user.id,
+            AgentSession.deleted_at.is_(None),
+        )
+        .values(deleted_at=datetime.now(timezone.utc))
+    )
+    await db.execute(stmt)
+    await db.commit()
 
 
 def prune_messages_on_rollback(messages: list[dict]) -> list[dict]:
@@ -1118,8 +1135,38 @@ async def edit_poster_direct(
         subject_image_base64=base64_data,
     )
 
-    # 3. 归档上一个生成结果
-    await archive_current_images(s, db)
+    # 3. 将上一个生成主图移入延伸图列表以保存在同一版本中
+    primary_url = None
+    old_gen_row = None
+    if s.generation_id:
+        old_gen_row = (
+            await db.execute(select(Generation).where(Generation.id == s.generation_id))
+        ).scalar_one_or_none()
+        if old_gen_row and old_gen_row.output_file_ids:
+            output_ids = _load_json(old_gen_row.output_file_ids, [])
+            if output_ids:
+                primary_url = f"/api/files/{output_ids[0]}"
+
+    extended = _load_json(s.extended_images, [])
+    if primary_url:
+        # 避免重复移入
+        if not any(item.get("generation_id") == s.generation_id for item in extended):
+            now_iso = datetime.now(timezone.utc).isoformat()
+            source_type = "edit" if old_gen_row and old_gen_row.action == "edit" else "primary"
+            old_primary_img = {
+                "id": f"edit-original-{s.generation_id}",
+                "ratio": s.primary_ratio or s.aspect_ratio or "1:1",
+                "resolution": s.primary_resolution or s.resolution or "1k",
+                "generation_id": s.generation_id,
+                "url": primary_url,
+                "source": source_type,
+                "created_at": s.updated_at.isoformat() if s.updated_at else now_iso,
+                "updated_at": now_iso,
+                "status": "completed",
+                "progress": 100,
+                "error_message": None,
+            }
+            extended.append(old_primary_img)
 
     # 4. 创建编辑任务
     generation_reference_file_ids = [subject_file_id]
@@ -1141,7 +1188,7 @@ async def edit_poster_direct(
     s.generation_id = gen.id
     s.primary_ratio = size
     s.primary_resolution = resolution
-    s.extended_images = None
+    s.extended_images = _dump_json(extended)
     s.status = "generating"
     s.updated_at = datetime.now(timezone.utc)
     await db.commit()

@@ -16,6 +16,11 @@ from __future__ import annotations
 
 import logging
 from typing import Optional
+from pydantic import BaseModel
+
+
+class BatchDeleteRequest(BaseModel):
+    session_ids: list[str]
 
 from fastapi import APIRouter, Depends, Form, Query, UploadFile, File as UploadFileDep
 from fastapi.responses import StreamingResponse
@@ -194,6 +199,16 @@ async def list_agent_sessions(
     for r in rows:
         await skill_runner.sync_session_status(r, db)
     return [_to_out(r) for r in rows]
+
+
+@router.post("/batch-delete", status_code=204)
+async def batch_delete_agent_sessions(
+    body: BatchDeleteRequest,
+    user: User = Depends(current_user),
+    db: AsyncSession = Depends(get_session),
+) -> None:
+    """批量软删除指定的 Agent 对话会话。"""
+    await skill_runner.delete_sessions(body.session_ids, user=user, db=db)
 
 
 @router.get("/{session_id}", response_model=AgentSessionOut)

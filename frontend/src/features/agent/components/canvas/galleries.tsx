@@ -590,12 +590,12 @@ export function HistoryVersions({
                         fontSize: 8,
                         fontWeight: 700,
                         color: "#fff",
-                        background: "rgba(0,0,0,0.6)",
+                        background: img.source === "primary" ? "rgba(35,131,226,0.75)" : img.source === "edit" ? "rgba(79,130,119,0.75)" : "rgba(0,0,0,0.6)",
                         padding: "1px 4px",
                         borderRadius: 3,
                       }}
                     >
-                      延伸 • {img.ratio} | {img.resolution?.toUpperCase() || "1K"}
+                      {img.source === "primary" ? "原图" : img.source === "edit" ? "修改" : "延伸"} • {img.ratio} | {img.resolution?.toUpperCase() || "1K"}
                     </div>
                   </div>
                 );
@@ -809,12 +809,12 @@ export function HistoryVersions({
                           fontSize: 8,
                           fontWeight: 700,
                           color: "#fff",
-                          background: "rgba(0,0,0,0.6)",
+                          background: img.source === "primary" ? "rgba(35,131,226,0.75)" : img.source === "edit" ? "rgba(79,130,119,0.75)" : "rgba(0,0,0,0.6)",
                           padding: "1px 4px",
                           borderRadius: 3,
                         }}
                       >
-                        延伸 • {img.ratio} | {img.resolution?.toUpperCase() || "1K"}
+                        {img.source === "primary" ? "原图" : img.source === "edit" ? "修改" : "延伸"} • {img.ratio} | {img.resolution?.toUpperCase() || "1K"}
                       </div>
                     </div>
                   );

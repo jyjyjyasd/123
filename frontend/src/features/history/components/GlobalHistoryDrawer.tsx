@@ -57,11 +57,7 @@ export function GlobalHistoryDrawer({
       <div
         className="fixed right-0 top-0 bottom-0 w-[460px] max-w-[90vw] bg-[#fff] z-[110] shadow-modal border-l border-border-default flex flex-col animate-[slideLeft_200ms_ease-out]"
       >
-        <header className="h-14 flex items-center justify-between px-6 border-b border-border-default flex-none">
-          <div className="text-sm font-semibold text-text-primary flex items-center gap-2">
-            <span>⚡</span>
-            <span>快速生成历史画廊</span>
-          </div>
+        <header className="h-14 flex items-center justify-end px-6 border-b border-border-default flex-none">
           <button
             type="button"
             onClick={onClose}

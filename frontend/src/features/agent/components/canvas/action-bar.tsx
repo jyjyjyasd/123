@@ -134,7 +134,6 @@ export function ActionBar({
           width: "100%",
         }}
       >
-        {/* 进入/退出标注模式 */}
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -142,12 +141,9 @@ export function ActionBar({
           }}
           style={{
             fontSize: 12,
-            padding: "6px 12px",
+            padding: "6px 14px",
             borderRadius: 6,
             fontWeight: 600,
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
             whiteSpace: "nowrap",
             border: isDrawingMode ? "2px solid #e03e3e" : "1px solid rgba(55,53,47,0.12)",
             background: isDrawingMode ? "#fdf2f2" : "#fff",
@@ -156,8 +152,7 @@ export function ActionBar({
             transition: "all 0.15s ease",
           }}
         >
-          <span>{isDrawingMode ? "❌" : "🖌️"}</span>
-          <span>{isDrawingMode ? "退出标注" : "海报修改"}</span>
+          {isDrawingMode ? "退出标注" : "海报修改"}
         </button>
 
         {/* 提示文字 */}

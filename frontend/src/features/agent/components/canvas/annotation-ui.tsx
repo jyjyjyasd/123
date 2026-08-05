@@ -1,13 +1,41 @@
 // canvas/annotation-ui.tsx — 海报圈画修改：工具 HUD 与浮动标签输入
-import type { RefObject } from "react";
+import { useState, type RefObject, type ReactNode } from "react";
 import type { DrawTool } from "./drawing";
 
-const TOOL_LABELS: Record<DrawTool, string> = {
-  freehand: "🖊",
-  arrow: "➡",
-  rect: "▭",
-  ellipse: "◯",
+// 定义 SVG 线条感线稿图标 (代替原有的 TOOL_LABELS)
+const TOOL_ICONS: Record<DrawTool, ReactNode> = {
+  freehand: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
+    </svg>
+  ),
+  arrow: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M5 19L19 5" />
+      <path d="M12 5h7v7" />
+    </svg>
+  ),
+  rect: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <rect width="18" height="18" x="3" y="3" rx="2" />
+    </svg>
+  ),
+  ellipse: (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+    </svg>
+  ),
 };
+
+// 清除动作线条图标
+const CLEAR_ICON = (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m7 21-4.3-4.3c-1-1-1-2.5 0-3.4l9.6-9.6c1-1 2.5-1 3.4 0l5.4 5.4c1 1 1 2.5 0 3.4L13 21Z" />
+    <path d="m22 21H7" />
+    <path d="m5 11 9 9" />
+  </svg>
+);
 
 export function AnnotationToolbar({
   activeTool,
@@ -18,14 +46,37 @@ export function AnnotationToolbar({
   onSelectTool: (tool: DrawTool) => void;
   onClear: () => void;
 }) {
+  const [hoveredButton, setHoveredButton] = useState<string | null>(null);
+
+  // 统一定义选中状态和普通状态的样式
+  const getButtonStyle = (isActive: boolean, isHovered: boolean) => ({
+    width: 32,
+    height: 32,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 6, // 遵循 PRD §5.4 图标按钮 6px 圆角规范
+    border: isActive 
+      ? "1px solid rgba(224, 62, 62, 0.24)" 
+      : "1px solid transparent",
+    background: isActive 
+      ? "rgba(224, 62, 62, 0.08)" 
+      : isHovered 
+        ? "rgba(55, 53, 47, 0.04)" 
+        : "transparent",
+    color: isActive ? "#e03e3e" : "#37352F",
+    cursor: "pointer",
+    transition: "all 0.12s ease",
+  });
+
   return (
     <div
       style={{
         background: "rgba(255,255,255,0.95)",
         backdropFilter: "blur(4px)",
         border: "1px solid rgba(55,53,47,0.12)",
-        borderRadius: 6,
-        padding: "5px 5px",
+        borderRadius: 8,
+        padding: "4px",
         display: "flex",
         flexDirection: "column",
         gap: 4,
@@ -36,58 +87,33 @@ export function AnnotationToolbar({
       {/* 工具切换 */}
       {(["freehand", "arrow", "rect", "ellipse"] as const).map((tool) => {
         const active = activeTool === tool;
+        const hovered = hoveredButton === tool;
         return (
           <button
             key={tool}
             onClick={(e) => { e.stopPropagation(); onSelectTool(tool); }}
+            onMouseEnter={() => setHoveredButton(tool)}
+            onMouseLeave={() => setHoveredButton(null)}
             title={{ freehand: "画笔", arrow: "箭头", rect: "矩形框选", ellipse: "椭圆框选" }[tool]}
-            style={{
-              fontSize: 11,
-              padding: "5px 7px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: 4,
-              fontWeight: active ? 600 : 500,
-              border: active ? "1.5px solid #FF4D4F" : "1px solid rgba(55,53,47,0.15)",
-              background: active ? "rgba(255,77,79,0.08)" : "#fff",
-              color: active ? "#e03e3e" : "#37352F",
-              cursor: "pointer",
-              transition: "all 0.12s ease",
-              whiteSpace: "nowrap",
-            }}
+            style={getButtonStyle(active, hovered)}
           >
-            {TOOL_LABELS[tool]}
+            {TOOL_ICONS[tool]}
           </button>
         );
       })}
 
       {/* 分隔线 */}
-      <div style={{ height: 1, background: "rgba(55,53,47,0.10)", margin: "2px 1px" }} />
+      <div style={{ height: 1, background: "rgba(55,53,47,0.08)", margin: "4px 2px" }} />
 
       {/* 清除 */}
       <button
         onClick={(e) => { e.stopPropagation(); onClear(); }}
+        onMouseEnter={() => setHoveredButton("clear")}
+        onMouseLeave={() => setHoveredButton(null)}
         title="清除标注"
-        style={{
-          fontSize: 11,
-          padding: "5px 7px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 4,
-          fontWeight: 500,
-          background: "#F2F1EE",
-          color: "#37352F",
-          border: "1px solid #E3E2E0",
-          cursor: "pointer",
-          transition: "background 0.12s",
-          whiteSpace: "nowrap",
-        }}
-        onMouseEnter={(e) => { e.currentTarget.style.background = "#E3E2E0"; }}
-        onMouseLeave={(e) => { e.currentTarget.style.background = "#F2F1EE"; }}
+        style={getButtonStyle(false, hoveredButton === "clear")}
       >
-        🧹
+        {CLEAR_ICON}
       </button>
     </div>
   );

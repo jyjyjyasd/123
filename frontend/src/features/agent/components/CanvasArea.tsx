@@ -228,29 +228,39 @@ export function CanvasArea({
 
   if (!session) return <EmptyCanvas />;
 
-  // 3. 计算自动同步的图像（最新延伸图优先，其次主图）
+  // 3. 计算自动同步的图像（以更新时间戳判定，确保自动展示最新完成的图）
   const extendedList = session.extended_images || [];
   const completedExtendedList = extendedList.filter(
     (img): img is typeof img & { url: string } => Boolean(img.url) && img.status !== "failed"
   );
   const hasGeneratedPrimary = Boolean(session.generation_id);
+  
   let autoSyncedImage = null;
-  if (completedExtendedList.length > 0) {
-    const lastExt = completedExtendedList[completedExtendedList.length - 1];
-    autoSyncedImage = {
-      url: lastExt.url,
-      ratio: lastExt.ratio,
-      resolution: lastExt.resolution || "1k",
-      isPrimary: false,
-    };
-  } else if (primaryImageUrl && hasGeneratedPrimary) {
+  let latestTime = 0;
+
+  if (primaryImageUrl && hasGeneratedPrimary) {
+    const primaryTime = session.updated_at ? new Date(session.updated_at).getTime() : 0;
     autoSyncedImage = {
       url: primaryImageUrl,
       ratio: session.primary_ratio || session.aspect_ratio || "1:1",
       resolution: session.primary_resolution || session.resolution || "1k",
       isPrimary: true,
     };
+    latestTime = primaryTime;
   }
+
+  completedExtendedList.forEach((img) => {
+    const imgTime = img.updated_at ? new Date(img.updated_at).getTime() : 0;
+    if (imgTime > latestTime) {
+      autoSyncedImage = {
+        url: img.url,
+        ratio: img.ratio,
+        resolution: img.resolution || "1k",
+        isPrimary: false,
+      };
+      latestTime = imgTime;
+    }
+  });
 
   // 当前画布展示图像
   const currentDisplayImage = userSelectedImage || autoSyncedImage;

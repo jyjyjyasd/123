@@ -70,6 +70,17 @@ export async function deleteSession(sessionId: string): Promise<void> {
   await fetch(`${BASE}/${sessionId}`, { method: "DELETE", credentials: "include" });
 }
 
+/** 批量删除会话 */
+export async function batchDeleteSessions(sessionIds: string[]): Promise<void> {
+  const res = await fetch(`${BASE}/batch-delete`, {
+    method: "POST",
+    credentials: "include",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ session_ids: sessionIds }),
+  });
+  if (!res.ok) throw new Error(`批量删除会话失败: ${res.status}`);
+}
+
 /**
  * 对话 SSE 流式请求。
  * 返回 ReadableStreamDefaultReader，调用方负责消费。
