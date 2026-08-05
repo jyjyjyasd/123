@@ -359,6 +359,9 @@ export function CanvasArea({
 
   const stopDrawing = () => {
     setIsDrawing(false);
+    // 防止 LabelInput 已弹出时，canvas 的 onMouseLeave 重复触发 stopDrawing
+    // 导致 setLabelText("") 清空用户已输入的文字
+    if (labelInput) return;
     if (
       (activeTool !== "arrow" && activeTool !== "rect" && activeTool !== "ellipse") ||
       !pendingArrowRef.current
@@ -654,7 +657,7 @@ export function CanvasArea({
       </div>
 
       {/* 画布区域（工具栏 + 画布卡片） */}
-      <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 12 }}>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", gap: 12 }}>
         {isDrawingMode && (
           <AnnotationToolbar
             activeTool={activeTool}
@@ -669,8 +672,6 @@ export function CanvasArea({
         style={{
           aspectRatio: (currentDisplayImage?.ratio || session.aspect_ratio) === "9:32" ? "9/16" : getRatioAspect(currentDisplayImage?.ratio || session.aspect_ratio),
           width: "auto",
-          flex: 1,
-          minWidth: 0,
           maxWidth: "100%",
           height: "calc(100vh - 360px)",
           minHeight: 280,
@@ -698,6 +699,7 @@ export function CanvasArea({
               width: (currentDisplayImage?.ratio || session.aspect_ratio) === "9:32" ? "100%" : "auto",
               height: (currentDisplayImage?.ratio || session.aspect_ratio) === "9:32" ? "auto" : "100%",
               aspectRatio: (currentDisplayImage?.ratio || session.aspect_ratio) === "9:32" ? "9/16" : getRatioAspect(currentDisplayImage?.ratio || session.aspect_ratio),
+              alignSelf: (currentDisplayImage?.ratio || session.aspect_ratio) === "9:32" ? "flex-start" : "center",
             }}
           >
             {session.status === "failed" && (

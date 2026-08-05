@@ -517,12 +517,8 @@ async def upload_reference_image(
             "type": stype
         }
 
-        if stype == "other":
-            from app.agent.llm_client import describe_reference_image
-            from app.storage import absolute_path_for
-            abs_path = absolute_path_for(row)
-            desc = await describe_reference_image(abs_path)
-            new_mat["description"] = desc
+        # 对于 "other" 类型的参考图，不再调用 Vision LLM，直接使用用户在前端填写的 description。
+        # 该块已被删除，以避免不必要的网络请求。
 
         if "subject_materials" not in existing_b or not isinstance(existing_b["subject_materials"], list):
             existing_b["subject_materials"] = []

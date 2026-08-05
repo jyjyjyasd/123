@@ -856,64 +856,6 @@ export function AgentWorkspace() {
                         >
                           <span>+ 上传 PDF 文档</span>
                         </button>
-
-                        {materials.length > 0 && (
-                          <div
-                            style={{
-                              borderTop: "1px solid rgba(55,53,47,0.06)",
-                              marginTop: 4,
-                              paddingTop: 6,
-                              maxHeight: 120,
-                              overflowY: "auto",
-                              display: "flex",
-                              flexDirection: "column",
-                              gap: 2
-                            }}
-                          >
-                            {materials.map((mat: any) => (
-                              <div
-                                key={mat.id}
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  padding: "4px",
-                                  borderRadius: 4,
-                                  fontSize: 10,
-                                  color: "#787774",
-                                  gap: 4
-                                }}
-                              >
-                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                                  <span
-                                    style={{
-                                      overflow: "hidden",
-                                      textOverflow: "ellipsis",
-                                      whiteSpace: "nowrap",
-                                      maxWidth: 140,
-                                      cursor: "pointer"
-                                    }}
-                                    onClick={() => window.open(mat.url, "_blank")}
-                                    title="查看大图"
-                                  >
-                                    {mat.type === "logo" ? "🏷️ Logo" : mat.type === "pdf_document" ? "📄 PDF" : mat.type === "other" ? "🧩 其他" : "🖼️ 素材"} ({mat.id.slice(-4)})
-                                  </span>
-                                  <button
-                                    onClick={() => removeMaterial(mat.id)}
-                                    style={{
-                                      border: "none",
-                                      background: "transparent",
-                                      color: "#e03e3e",
-                                      cursor: "pointer",
-                                      fontSize: 10
-                                    }}
-                                  >
-                                    移除
-                                  </button>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
                       </div>
                     )}
                   </div>

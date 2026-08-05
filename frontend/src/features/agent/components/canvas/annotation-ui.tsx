@@ -3,10 +3,10 @@ import type { RefObject } from "react";
 import type { DrawTool } from "./drawing";
 
 const TOOL_LABELS: Record<DrawTool, string> = {
-  freehand: "🖊 画",
-  arrow: "➡ 箭",
-  rect: "▭ 框",
-  ellipse: "◯ 椭",
+  freehand: "🖊",
+  arrow: "➡",
+  rect: "▭",
+  ellipse: "◯",
 };
 
 export function AnnotationToolbar({
@@ -40,7 +40,7 @@ export function AnnotationToolbar({
           <button
             key={tool}
             onClick={(e) => { e.stopPropagation(); onSelectTool(tool); }}
-            title={`工具: ${TOOL_LABELS[tool]}`}
+            title={{ freehand: "画笔", arrow: "箭头", rect: "矩形框选", ellipse: "椭圆框选" }[tool]}
             style={{
               fontSize: 11,
               padding: "5px 7px",
@@ -87,7 +87,7 @@ export function AnnotationToolbar({
         onMouseEnter={(e) => { e.currentTarget.style.background = "#E3E2E0"; }}
         onMouseLeave={(e) => { e.currentTarget.style.background = "#F2F1EE"; }}
       >
-        🧹 清
+        🧹
       </button>
     </div>
   );
