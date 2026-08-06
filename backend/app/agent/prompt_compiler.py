@@ -26,17 +26,44 @@ def build_final_prompt(
     layout = stream_a or {}
     visual = stream_b or {}
 
-    visual_desc = visual.get("visual_description") or (
+    visual_desc = visual.get("visual_description")
+    if visual_desc == "参考图片" or not visual_desc:
+        visual_desc = visual.get("style_ref_description")
+        if (visual_desc == "参考图片" or not visual_desc) and visual.get("style_reference_image"):
+            visual_desc = "Use the visual style, colors, lighting, and mood from the provided style reference image."
+
+    visual_desc = visual_desc or (
         "No specific visual direction was provided. "
         "Create a clean, restrained, premium poster visual with simple composition "
         "and avoid inventing unrelated subjects."
     )
-    layout_prompt = layout.get("layout_prompt") or (
+    copy_text = layout.get("copy") or ""
+    layout_notes = layout.get("layout_notes")
+    if layout_notes == "参考图片" or not layout_notes:
+        layout_notes = layout.get("layout_ref_notes")
+
+    # Restore layout_prompt when layout_notes matches the cached reference notes or layout reference image is present
+    layout_ref_image = visual.get("layout_reference_image")
+    layout_prompt = layout.get("layout_prompt")
+
+    is_using_ref_layout = (
+        (layout_notes and layout_notes == layout.get("layout_ref_notes")) or
+        (not layout_notes and layout_ref_image)
+    )
+
+    if is_using_ref_layout:
+        if layout.get("layout_ref_prompt"):
+            layout_prompt = layout.get("layout_ref_prompt")
+        elif layout_ref_image:
+            layout_prompt = "Use a balanced editorial poster layout with clear spacing and simple hierarchy matching the provided layout reference image."
+            if not layout_notes:
+                layout_notes = "Use a balanced editorial poster layout with clear spacing and simple hierarchy matching the provided layout reference image."
+
+    layout_notes = layout_notes or ""
+    layout_prompt = layout_prompt or (
         "No layout reference was provided. "
         "Use a balanced editorial poster layout with clear spacing and simple hierarchy."
     )
-    copy_text = layout.get("copy") or ""
-    layout_notes = layout.get("layout_notes") or ""
 
     # 用动态字段值替换 layout_notes 里的占位行（移植 prd 同名逻辑）
     if layout_notes and isinstance(layout, dict):

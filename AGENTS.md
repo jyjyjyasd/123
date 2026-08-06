@@ -276,6 +276,7 @@ type ErrorCode =
 | 尺寸从 3 档枚举（square/landscape/portrait）改为 7 档场景化预设 + edit auto，DB 存真实 `WIDTHxHEIGHT` | 旧代理商 2026-04-28 确认上游接受任何满足官方约束的 WxH；apimart v0.8 实测也接受像素 size。前端 UI 走"按场景选"，DB 存真实像素，前端缩略图用 `style.aspectRatio` 直接渲染 — 任意 W×H 都对，不再受 Tailwind JIT 静态类名约束。详见 §7 表与 size-presets.ts；迁移 `c2d3e4f56789` 按 action 把旧枚举映射成像素值 |
 | 参考图上传与生成提交解耦：选完图立即 `POST /api/uploads` 拿 `file_id`，提交 `/api/generations` 时只带 `reference_file_ids` | 旧的"提交时一并 multipart 上传"在大图下没有可见进度（fetch 无 upload-progress 事件），用户等待时不知道发生了什么。拆开后每张缩略图独立显示进度 / 成功 / 失败 / 重试，与微信/Notion/ChatGPT 一致。前端用 XHR 监听 `upload.progress`（见 `lib/api.ts · apiUpload`）。orphan upload 由现有 7 天 GC 兜底，不加 DELETE 端点 |
 | 在上传风格参考图后当前风格输入框改为只读按钮并扩大点击热区（v0.9.1） | 当有参考图时风格不可编辑，为了方便用户切回“当前风格（参考图片）”，移除了 hasStyleRef 时的点击拦截和冒泡阻断，将输入框的整块区域作为可点击热区，并将 cursor 动态设为 pointer。 |
+| 点击“参考图片”指示区回填真实参考描述 + prompt 编译回退（v0.10.2） | 此前点击“参考图片”会把占位符本身写回选中项，生成 prompt 里出现无意义中文；现在构造选中项时携带 `style_ref_description` / `layout_ref_notes`（缺省降级到 `visual_description` / `layout_notes`），`prompt_compiler.py` 在描述为“参考图片”或缺失时回退到参考图专属字段或标准英文参考指令。新字段目前仅读取侧生效，LLM 提取侧未强制输出。 |
 
 ---
 

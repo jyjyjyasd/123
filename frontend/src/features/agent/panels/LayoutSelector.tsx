@@ -11,6 +11,7 @@ import type { LayoutRecommendation } from "../types";
 interface LayoutSelectorProps {
   hasLayoutRef: boolean;
   layoutDescription: string;
+  layoutRefNotes?: string | null;
   onSendMessage?: (msg: string) => Promise<void>;
   onSelectLayout: (rec: LayoutRecommendation, source: 'custom' | 'recommendation') => void;
   onSelectTag: (tag: PresetLayoutTag) => void;
@@ -19,6 +20,7 @@ interface LayoutSelectorProps {
 export function LayoutSelector({
   hasLayoutRef,
   layoutDescription,
+  layoutRefNotes,
   onSendMessage,
   onSelectLayout,
   onSelectTag,
@@ -92,7 +94,17 @@ export function LayoutSelector({
           <div
             onClick={() => {
               if (isRefreshing) return;
-              if (hasLayoutRef) return;
+              if (hasLayoutRef) {
+                const val = REF_INDICATOR;
+                const desc = layoutRefNotes || (layoutDescription !== REF_INDICATOR ? layoutDescription : "");
+                const item: LayoutRecommendation = {
+                  index: 99,
+                  name: val,
+                  description: desc,
+                };
+                onSelectLayout(item, 'custom');
+                return;
+              }
               if (!isCurrentActive) {
                 const val = layoutTextareaRef.current?.value.trim() || layoutVal;
                 const item: LayoutRecommendation = {
@@ -116,12 +128,19 @@ export function LayoutSelector({
               textAlign: "left" as const,
               transition: "all 0.15s",
               width: "100%",
-              cursor: isCurrentActive ? "text" : "pointer",
+              cursor: hasLayoutRef ? "pointer" : (isCurrentActive ? "text" : "pointer"),
               opacity: isRefreshing ? 0.6 : 1,
               minHeight: 42,
             }}
           >
-            <div style={{ flex: 1, display: "flex", flexDirection: "column" }} onClick={(e) => e.stopPropagation()}>
+            <div
+              style={{ flex: 1, display: "flex", flexDirection: "column" }}
+              onClick={(e) => {
+                if (!hasLayoutRef) {
+                  e.stopPropagation();
+                }
+              }}
+            >
               <textarea
                 ref={(el) => {
                   (layoutTextareaRef as any).current = el;
@@ -148,6 +167,7 @@ export function LayoutSelector({
                   }
                 }}
                 onBlur={(e) => {
+                  if (hasLayoutRef) return;
                   const val = e.target.value.trim();
                   if (val && (val !== layoutVal || confirmedSource !== 'custom')) {
                     const item: LayoutRecommendation = {

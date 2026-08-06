@@ -305,6 +305,7 @@ export function AgentWorkspace() {
                     <StyleSelector
                       hasStyleRef={!!session?.stream_b?.style_reference_image}
                       visualDescription={session?.stream_b?.visual_description || ""}
+                      styleRefDescription={session?.stream_b?.style_ref_description}
                       knownStyleSummary={knownStyleSummary}
                       onSelectStyle={async (rec, source) => {
                         ds_setActiveStyle(rec, source);
@@ -320,6 +321,7 @@ export function AgentWorkspace() {
                     <LayoutSelector
                       hasLayoutRef={!!session?.stream_b?.layout_reference_image}
                       layoutDescription={session?.stream_a?.layout_notes || ""}
+                      layoutRefNotes={session?.stream_a?.layout_ref_notes}
                       onSelectLayout={async (rec, source) => {
                         ds_setActiveLayout(rec, source);
                         await updateParams({ stream_a: { layout_notes: rec.description || rec.layout_notes } });

@@ -11,6 +11,7 @@ import type { StyleRecommendation } from "../types";
 interface StyleSelectorProps {
   hasStyleRef: boolean;
   visualDescription: string;
+  styleRefDescription?: string | null;
   knownStyleSummary?: string;
   onSendMessage?: (msg: string) => Promise<void>;
   onSelectStyle: (rec: StyleRecommendation, source: 'custom' | 'recommendation') => void;
@@ -31,6 +32,7 @@ function resolveFriendlyStyleName(raw: string): string {
 export function StyleSelector({
   hasStyleRef,
   visualDescription,
+  styleRefDescription,
   knownStyleSummary = "",
   onSendMessage,
   onSelectStyle,
@@ -113,11 +115,12 @@ export function StyleSelector({
               if (isRefreshing) return;
               if (hasStyleRef) {
                 const val = REF_INDICATOR;
+                const desc = styleRefDescription || (visualDescription !== REF_INDICATOR ? visualDescription : "not provided");
                 const item: StyleRecommendation = {
                   index: 99,
                   name: val,
                   name_en: val,
-                  visual_description: val,
+                  visual_description: desc,
                 };
                 onSelectStyle(item, 'custom');
                 return;
@@ -187,6 +190,7 @@ export function StyleSelector({
                   }
                 }}
                 onBlur={(e) => {
+                  if (hasStyleRef) return;
                   const val = e.target.value.trim();
                   // 未确认任何来源且内容未改动时（展示的是「已知」中文摘要），不写回 visual_description，
                   // 避免把中文摘要覆盖到英文生图提示词上

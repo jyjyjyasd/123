@@ -69,6 +69,15 @@ cd frontend && pnpm typecheck && pnpm lint
 
 版本号自 `v0.1.0`（2026-04-23 首个端到端可用版本）起按 [semver](https://semver.org/lang/zh-CN/) 计：minor 对应"新功能 / 大重构"，patch 对应"体验打磨 / bug 修复"。Phase 1 全程在 `0.x`，Phase 2 切真 SSO / 对象存储后再升 `1.0`。
 
+### v0.10.2 — 2026-08-06 · 参考图片选中回填真实描述与 prompt 编译回退
+
+- **动机**：点击"当前风格 / 当前排版（参考图片）"指示区时，之前会把占位符"参考图片"本身写回选中项，导致最终生图 prompt 里出现无意义的中文占位文案，参考图描述没有真正生效。
+- **改动点**：
+  - **前端 / 选中回填**：`StyleSelector` / `LayoutSelector` 点击"参考图片"热区时，携带真实参考描述（`style_ref_description` / `layout_ref_notes`，缺省回退到当前 `visual_description` / `layout_notes`）构造选中项，不再写占位符本身。
+  - **前端 / 类型补充**：`StreamA.layout_ref_notes` / `StreamB.style_ref_description` 可选字段声明。
+  - **后端 / prompt 编译回退**：`prompt_compiler.py` 在视觉/排版描述为"参考图片"或缺失时，回退到参考图专属字段，仍无则使用标准英文参考指令。
+- **取舍**：新字段目前仅读取侧生效（LLM 提取侧未强制输出），缺省时按既有字段降级，保持向后兼容；等 LLM 侧输出后无需再改前端。
+
 ### v0.10.1 — 2026-08-06 · AgentWorkspace组件拆分与交互样式优化
 
 - **动机**：优化主工作区组件的代码可读性与渲染性能；避免管理历史记录（勾选复选框等高频操作）时引起整个工作区重绘，同时清理不符合规范的内联样式注入。

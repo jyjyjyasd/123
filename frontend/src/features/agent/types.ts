@@ -30,6 +30,7 @@ export interface StreamA {
   density?: string;
   poster_strategy?: Record<string, any> | null;
   quick_replies?: string[] | null;
+  layout_ref_notes?: string | null;
 }
 
 export interface StreamB {
@@ -42,6 +43,7 @@ export interface StreamB {
   subject_reference_image_type?: "subject" | "logo" | "other" | null;
   subject_materials?: Array<{ id: string; url: string; type: string; description?: string }> | null;
   style_recommendations?: StyleRecommendation[] | null;
+  style_ref_description?: string | null;
 }
 
 export interface StyleRecommendation {

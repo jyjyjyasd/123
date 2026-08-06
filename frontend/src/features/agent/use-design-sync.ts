@@ -27,7 +27,7 @@ export function useDesignSync(session: AgentSession | null) {
 
     const styleDesc = session.stream_b?.visual_description;
     const hasStyleDesc = styleDesc && styleDesc !== "not provided" && styleDesc !== "not-provided";
-    if (hasStyleDesc && storeState.confirmed_style_source === null) {
+    if (hasStyleDesc && (storeState.confirmed_style_source === null || storeState.confirmed_style_source === 'agent_input')) {
       useDesignStore.setState({
         confirmed_style_source: 'agent_input',
         active_style: {
@@ -41,7 +41,7 @@ export function useDesignSync(session: AgentSession | null) {
 
     const layoutDesc = session.stream_a?.layout_notes;
     const hasLayoutDesc = layoutDesc && layoutDesc !== "暂无具体排版要求";
-    if (hasLayoutDesc && storeState.confirmed_layout_source === null) {
+    if (hasLayoutDesc && (storeState.confirmed_layout_source === null || storeState.confirmed_layout_source === 'agent_input')) {
       useDesignStore.setState({
         confirmed_layout_source: 'agent_input',
         active_layout: {
