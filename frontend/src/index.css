@@ -180,3 +180,22 @@ button {
   scrollbar-width: none;  /* Firefox */
 }
 
+/* Disable interactions during generation or after confirmation */
+.generating-disabled button,
+.generating-disabled textarea,
+.generating-disabled a,
+.generating-disabled [role="button"] {
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.55 !important;
+}
+
+.confirmed-disabled button,
+.confirmed-disabled textarea,
+.confirmed-disabled a,
+.confirmed-disabled [role="button"] {
+  pointer-events: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.55 !important;
+}
+
