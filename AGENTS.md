@@ -277,6 +277,7 @@ type ErrorCode =
 | 参考图上传与生成提交解耦：选完图立即 `POST /api/uploads` 拿 `file_id`，提交 `/api/generations` 时只带 `reference_file_ids` | 旧的"提交时一并 multipart 上传"在大图下没有可见进度（fetch 无 upload-progress 事件），用户等待时不知道发生了什么。拆开后每张缩略图独立显示进度 / 成功 / 失败 / 重试，与微信/Notion/ChatGPT 一致。前端用 XHR 监听 `upload.progress`（见 `lib/api.ts · apiUpload`）。orphan upload 由现有 7 天 GC 兜底，不加 DELETE 端点 |
 | 在上传风格参考图后当前风格输入框改为只读按钮并扩大点击热区（v0.9.1） | 当有参考图时风格不可编辑，为了方便用户切回“当前风格（参考图片）”，移除了 hasStyleRef 时的点击拦截和冒泡阻断，将输入框的整块区域作为可点击热区，并将 cursor 动态设为 pointer。 |
 | 点击“参考图片”指示区回填真实参考描述 + prompt 编译回退（v0.10.2） | 此前点击“参考图片”会把占位符本身写回选中项，生成 prompt 里出现无意义中文；现在构造选中项时携带 `style_ref_description` / `layout_ref_notes`（缺省降级到 `visual_description` / `layout_notes`），`prompt_compiler.py` 在描述为“参考图片”或缺失时回退到参考图专属字段或标准英文参考指令。新字段目前仅读取侧生效，LLM 提取侧未强制输出。 |
+| 最终生图提示词精简去重（v0.10.3）：多段文案编号单次枚举，移除全英文强制规则 / “完整海报”固定句 / 风格排版参考图职责说明 | 原提示词把同一段文案引用多遍、固定规则重复冗长，且“整段必须全英文”与中文文案 / 中文排版说明冲突、风格/排版参考图实际只走 LLM 分析不进生图请求；精简后 token 更省、指令文本被误渲染风险更低。删除“完整海报”约束后空背景风险待实测，防泄漏由“只印 Main Title copy”一句承担。 |
 
 ---
 

@@ -86,72 +86,32 @@ def build_final_prompt(
         "No main title text was provided. "
         "Keep the design clean and do not invent random text."
     )
-    spatial_ordering = ""
-
     if copy_text:
         segments = [s.strip() for s in copy_text.split("|") if s.strip()]
         if len(segments) > 1:
-            seg_str = ", ".join(f'"{s}"' for s in segments)
+            # 编号单次枚举：每段文案只出现一次，顺序默认自上而下（copy 本身按主标题|副标题|辅助排列）
+            numbered_lines = "\n".join(f'  {i}. "{seg}"' for i, seg in enumerate(segments, 1))
             text_instruction = (
-                f"The poster MUST prominently and clearly display each of the following separate text phrases "
-                f"verbatim in their original language: {seg_str}. "
-                f"Render each phrase as a beautiful artistic typography layer, using a bold, clean, highly "
-                f"professional modern graphic design font style, positioned perfectly as separate layout elements. "
-                f"CRITICAL WARNING: DO NOT print the delimiter symbol '|' or any vertical bars on the poster! "
-                f"Only print the exact character segments: {seg_str}. "
-                f"DO NOT translate, change spelling, or modify the characters under any circumstances. "
-                f"Ensure there are no typos or bad spelling."
+                f"Render the following {len(segments)} text phrases EXACTLY as written, in this order, "
+                f"as separate typography layers on the poster, using a bold, clean, professional modern graphic design font style:\n"
+                f"{numbered_lines}\n"
+                f"Vertical order: follow the numbered list top to bottom.\n"
+                f"Never translate, alter, merge, split, or invent any characters; "
+                f"do not print the '|' separators, the numbering, or any instruction text."
             )
-            # 提取中文空间方位词，生成英文空间叠加指令
-            relations: list[str] = []
-            for seg in segments:
-                line_match = next(
-                    (l for l in layout_notes.split("\n") if seg in l), None
-                )
-                if line_match:
-                    if any(w in line_match for w in ["上方", "顶部", "之上", "above", "top of"]):
-                        relations.append(
-                            f'  * The text phrase "{seg}" MUST be positioned vertically ABOVE '
-                            f"and directly on top of the other main text elements (in the upper region of the poster layout)."
-                        )
-                    elif any(w in line_match for w in ["下方", "底部", "之下", "below", "bottom of", "under"]):
-                        relations.append(
-                            f'  * The text phrase "{seg}" MUST be positioned vertically BELOW '
-                            f"and directly under the other main text elements (in the lower region of the poster layout)."
-                        )
-            if relations:
-                spatial_ordering = (
-                    "\nCRITICAL SPATIAL LAYOUT RELATIONSHIPS (MUST FOLLOW VERTICALLY):\n"
-                    + "\n".join(relations)
-                    + "\n- Strictly follow this vertical stacking hierarchy."
-                )
         else:
             text_instruction = (
-                f'The poster MUST prominently and clearly display the exact text characters "{copy_text}" '
-                f"verbatim in its original language as a beautiful artistic typography layer, using a bold, clean, "
-                f"highly professional modern graphic design font style, positioned perfectly according to the layout. "
-                f'DO NOT translate, change spelling, or modify the characters of "{copy_text}" under any circumstances. '
-                f"Ensure there are no typos, bad spelling, or garbled letters."
+                f'Render the exact text "{copy_text}" verbatim as the poster\'s typography, '
+                f"using a bold, clean, professional modern graphic design font style, positioned according to the layout. "
+                f"Never translate, alter, or invent any characters; ensure no typos or garbled letters."
             )
 
-    subtext_instruction = (
-        "No separate secondary text is provided. "
-        "The complete copy to be rendered is described in the Main Title text layer. "
-        "Please arrange and segment the text according to the Layout and Hierarchy Guidelines below."
-    )
-
     # ── 参考图标注 ──
+    # 风格/排版参考图只走 LLM 分析通道，不进入生图请求（见 skill_runner.collect_generation_reference_file_ids），
+    # 因此不生成对应职责说明；仅主体图、其他素材图作为真实附件提交。
     ref_lines = []
     materials = visual.get("subject_materials") or []
-    if visual.get("style_reference_image"):
-        ref_lines.append(
-            "- Style reference image was analyzed only for visual mood, palette, lighting, background texture, and art direction."
-        )
-    if visual.get("layout_reference_image"):
-        ref_lines.append(
-            "- Layout reference image was analyzed only for composition, typography hierarchy, spacing, alignment, and visual weight distribution."
-        )
-        
+
     subject_mat = next((m for m in materials if isinstance(m, dict) and m.get("type") == "subject"), None)
     subject_desc = subject_mat.get("description") if subject_mat else ""
     if visual.get("subject_reference_image"):
@@ -183,30 +143,21 @@ def build_final_prompt(
         )
 
     return (
-        f"A premium, high-end editorial graphic design poster.\n"
+        f"The poster design content is as follows:\n"
         f"Visual Scene Design:\n"
         f"{visual_desc}"
         f"{extend_instruction}\n\n"
         f"Reference Interpretation:\n"
         f"{reference_instruction or '- No reference images were attached.'}\n\n"
         f"Typography & Text Layout:\n"
-        f"- Main Title text layer: {text_instruction}"
-        f"{chr(10) + spatial_ordering if spatial_ordering else ''}\n"
-        f"- Subtext/Slogan details: {subtext_instruction}\n"
+        f"- Main Title text layer: {text_instruction}\n"
         f"- Structure rules: {layout_prompt}\n"
         f"- Layout and Hierarchy Guidelines: {layout_notes}. "
-        f"NOTE: The guidelines described here are design and layout instructions only. "
-        f"DO NOT print this instruction/description text itself on the poster under any circumstances! "
-        f"Only print the actual copy characters from the Main Title text layer.\n\n"
+        f"Print only the Main Title copy. Never render the layout notes or instruction text.\n\n"
         f"Format & Composition:\n"
         f"- Aspect Ratio: {aspect_ratio}\n"
         f"- Resolution target: {resolution}\n"
-        f"- Generate a complete finished poster, not only a background image. "
-        f"The final image must combine the available visual scene, subject, typography, and layout into one coherent poster.\n"
-        f"- If information is missing, keep that area minimal; do not invent unrelated products, slogans, dates, brands, or event details.\n"
-        f"- Highly aesthetic composition, professional graphic design editorial layout, balanced negative space, "
-        f"clean typography when text exists, no overlapping elements, masterpiece.\n"
-        f"- CRITICAL: The entire final generation prompt must be written entirely in English. Do not include Chinese characters."
+        f"- Missing info stays blank; never invent. Balanced composition, clean typography, no overlap.\n"
     ).strip()
 
 
